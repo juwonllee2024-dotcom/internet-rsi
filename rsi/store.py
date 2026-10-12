@@ -95,6 +95,15 @@ class Store:
                        (json.dumps(payload),self.clock()+self.lease_seconds,job_id))
             return payload
 
+    def fail(self, job_id, token, failure):
+        with self.transaction() as db:
+            row=self._check(db,job_id,token)
+            report={'failure':str(failure)[:300],'samples':json.loads(row['payload'])['samples'],
+                    'decision':{'accepted':False,'kind':None,'reason':'failed experiment: '+str(failure)[:160]}}
+            db.execute("UPDATE jobs SET status='failed',report=? WHERE id=?",(json.dumps(report),job_id))
+            self._ensure_next(db)
+            return report
+
     def finish(self, job_id, token, report):
         with self.transaction() as db:
             row = db.execute('SELECT * FROM jobs WHERE id=?', (job_id,)).fetchone()

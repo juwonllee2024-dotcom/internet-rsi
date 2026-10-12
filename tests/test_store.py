@@ -66,6 +66,13 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(new['attempts'][0]['samples']['baseline']['arithmetic']['passed'],True)
         self.assertEqual(new['identity']['platform'],'Linux')
 
+    def test_failed_proposal_is_recorded_and_next_work_queued(self):
+        job=self.store.claim('one')
+        self.store.fail(job['id'],job['token'],'invalid generated hypothesis')
+        self.assertEqual(self.store.export(job['id'])['failure'],'invalid generated hypothesis')
+        self.assertEqual(self.store.claim('one')['id'],2)
+        self.assertEqual(self.store.status()['validated']['version'],1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -124,6 +124,14 @@ export class Coordinator {
         if (path === '/finish' && requested?.status === 'done' && requested.token === data.token) return response(requested.report.decision);
         this.check(requested,data.token);
         if (requested.id !== meta.active) throw Error('Job is not active');
+        if(path === '/fail') {
+          requested.status='failed';requested.completed_at=new Date().toISOString();
+          requested.report={failure:String(data.failure).slice(0,300),samples:requested.payload.samples,
+            decision:{accepted:false,kind:null,reason:'failed experiment: '+String(data.failure).slice(0,160)}};
+          meta.observations={proposal_failure:String(data.failure).slice(0,160)};
+          const today=new Date().toISOString().slice(0,10);meta.completed_count=meta.completed_day===today ? meta.completed_count+1 : 1;meta.completed_day=today;
+          await tx.put('job:'+requested.id,requested);await tx.put('meta',meta);await this.ensure(tx);return response(requested.report);
+        }
         if(path === '/restart-attempt') {
           if(data.identity?.digest !== requested.payload.identity?.digest || data.identity?.model !== BASE_CONFIG.model) throw Error('Model digest cannot change during handoff');
           const attempts=requested.payload.attempts || [];
@@ -182,7 +190,7 @@ export default {
     if(url.pathname === '/health') return new Response(JSON.stringify({ok:true,model:BASE_CONFIG.model}),{headers:{...headers,'Content-Type':'application/json'}});
     const publicRead=request.method === 'GET' && url.pathname === '/status';
     if (!publicRead && !tokenEqual(request.headers.get('Authorization')?.replace(/^Bearer /,''),env.RSI_TOKEN)) return new Response(JSON.stringify({error:'Unauthorized'}),{status:401,headers});
-    if (!['/status','/claim','/checkpoint','/finish','/pause','/export','/resource-job','/tick','/import-local','/restart-attempt'].includes(url.pathname)) return new Response('Not found',{status:404,headers});
+    if (!['/status','/claim','/checkpoint','/finish','/pause','/export','/resource-job','/tick','/import-local','/restart-attempt','/fail'].includes(url.pathname)) return new Response('Not found',{status:404,headers});
     const stub=env.COORDINATOR.get(env.COORDINATOR.idFromName('research'));
     const result=await stub.fetch(request);
     const outgoing=new Response(result.body,result); for(const [key,value] of Object.entries(headers)) outgoing.headers.set(key,value);

@@ -34,6 +34,7 @@ class RemoteStore:
     def checkpoint(self,job_id,token,payload): return self.request('/checkpoint',{'id':job_id,'token':token,'payload':payload})
     def finish(self,job_id,token,report): return self.request('/finish',{'id':job_id,'token':token,'report':report})
     def restart_attempt(self,job_id,token,identity): return self.request('/restart-attempt',{'id':job_id,'token':token,'identity':identity})
+    def fail(self,job_id,token,failure): return self.request('/fail',{'id':job_id,'token':token,'failure':str(failure)[:300]})
     def status(self): return self.request('/status')
     def pause(self,value): return self.request('/pause',{'paused':value})
     def export(self,job_id): return self.request('/export?job='+str(job_id))

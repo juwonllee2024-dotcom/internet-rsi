@@ -42,9 +42,13 @@ def run_cycle(store, runtime, owner='local-cpu', output_dir=None):
             'system_prompt (string, at most 1200 characters), think (boolean). Improve reliable reasoning and JSON tool use. '
             'No evaluation examples are provided. No model replacement or tool additions. Current prompt: '
             + baseline['system_prompt'] + '\nAggregate observations: ' + json.dumps(observations))
-        response = runtime.generate([{'role': 'user', 'content': proposal_prompt}], dict(baseline, num_predict=384))
-        payload['candidate'] = candidate_from_proposal(json.loads(response['text']), baseline)
-        payload['proposal_metrics'] = response
+        try:
+            response = runtime.generate([{'role': 'user', 'content': proposal_prompt}], dict(baseline, num_predict=384))
+            payload['proposal_metrics'] = response
+            store.checkpoint(job['id'],job['token'],payload)
+            payload['candidate'] = candidate_from_proposal(json.loads(response['text']), baseline)
+        except (ValueError,KeyError,RuntimeError) as error:
+            return store.fail(job['id'],job['token'],type(error).__name__+': '+str(error)[:160])
         store.checkpoint(job['id'], job['token'], payload)
     suite = make_suite(payload['seed'])
     revision = code_revision()
