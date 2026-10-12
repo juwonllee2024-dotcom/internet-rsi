@@ -1,5 +1,46 @@
 [
   {
+    "cycle": 3,
+    "suite_version": "synthetic-v2",
+    "decision": {
+      "accepted": false,
+      "kind": null,
+      "reason": "individual task regression"
+    },
+    "variants": {
+      "baseline": {
+        "successes": 1,
+        "tasks": 8,
+        "median_latency_s": 1.7083054375000017,
+        "total_latency_s": 14.72447363400002,
+        "generated_tokens_observed": 96,
+        "token_count_complete": true,
+        "successful_tasks_per_1000_output_tokens": 10.416666666666666,
+        "successful_tasks_per_second": 0.067914142458099,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.08406728024464286,
+        "failures": 7,
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "candidate": {
+        "successes": 0,
+        "tasks": 8,
+        "median_latency_s": 10.010767411999979,
+        "total_latency_s": 80.58328966199994,
+        "generated_tokens_observed": 1536,
+        "token_count_complete": true,
+        "successful_tasks_per_1000_output_tokens": 0.0,
+        "successful_tasks_per_second": 0.0,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.0,
+        "failures": 8,
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    }
+  },
+  {
     "cycle": 2,
     "suite_version": "synthetic-v1",
     "decision": {

@@ -1,0 +1,530 @@
+{
+  "job": 3,
+  "baseline_version": 1,
+  "baseline_config": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "system_prompt": "Follow instructions carefully. Use available tools when needed.",
+    "think": false,
+    "num_ctx": 2048,
+    "num_predict": 192,
+    "num_thread": 4,
+    "temperature": 0,
+    "seed": 0
+  },
+  "candidate_config": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "system_prompt": "You are an expert assistant. When faced with complex tasks, always first decompose them into a 'Reasoning Chain' of 3-5 specific sub-steps. Execute each step sequentially, using tools only when explicitly required by the current sub-step. After completing all steps, synthesize the results into a final answer. This ensures reliable reasoning and prevents regression.",
+    "think": true,
+    "num_ctx": 2048,
+    "num_predict": 192,
+    "num_thread": 4,
+    "temperature": 0,
+    "seed": 0
+  },
+  "hypothesis": "Introduce a structured 'Reasoning Chain' step in the system prompt that explicitly requires breaking down complex tasks into sub-goals before executing any tool calls or generating final output, thereby reducing the likelihood of individual task regressions.",
+  "change_type": "system",
+  "identity": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "digest": "1e2d21a4f03ab9e4a9c1976a4b7e88f21de61d65f2c5485d8fde8942be73f1e7",
+    "size_bytes": 1945781358,
+    "hardware": {
+      "cpu": "AMD EPYC 9V74 80-Core Processor",
+      "logical_cpus": 4,
+      "architecture": "x86_64",
+      "host_hash": "c278f5569b1072258c3e6b724dc2cdf19ce3d90cb7c151458c15414d2e7b492d"
+    },
+    "source_hash": "e33a4c5c2b9c5647a2643ac6ebf3795891d0e40e10a004df1195e1cd79d318b9",
+    "details": {
+      "parent_model": "model.gguf",
+      "format": "gguf",
+      "family": "qwen35",
+      "families": [
+        "qwen35"
+      ],
+      "parameter_size": "1.9B",
+      "quantization_level": "Q4_K_M",
+      "runner": "llamacpp"
+    },
+    "ollama": "0.40.3",
+    "platform": "Linux",
+    "threads": 4
+  },
+  "code_revision": "04f79a659ea75726822d26f94610f74d06a447a4",
+  "suite_version": "synthetic-v2",
+  "suite_seed": 133346661145610,
+  "suite_hash": "3793bf2c395d628075f5ce465d34239f082b7cbec9cfb13e2ecd348388b5e1fd",
+  "samples": {
+    "baseline": {
+      "arithmetic": {
+        "id": "arithmetic",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 1.6321577479999974,
+        "eval_count": 9,
+        "prompt_eval_count": 131,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 252}",
+            "latency_s": 1.632003085000008,
+            "truncated": false,
+            "eval_count": 9,
+            "prompt_eval_count": 131,
+            "inference_duration_s": 1.630352346,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13275586560,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "word-problem": {
+        "id": "word-problem",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 1.6550057370000104,
+        "eval_count": 8,
+        "prompt_eval_count": 139,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 20}",
+            "latency_s": 1.654879405999992,
+            "truncated": false,
+            "eval_count": 8,
+            "prompt_eval_count": 139,
+            "inference_duration_s": 1.653259754,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13338931200,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "instruction": {
+        "id": "instruction",
+        "category": "instruction",
+        "passed": false,
+        "latency_s": 1.9159112380000067,
+        "eval_count": 14,
+        "prompt_eval_count": 140,
+        "error": "KeyError: 'tool'",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"color\": \"blue\", \"count\": 12}",
+            "latency_s": 1.915778056999983,
+            "truncated": false,
+            "eval_count": 14,
+            "prompt_eval_count": 140,
+            "inference_duration_s": 1.914054764,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13343498240,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "code": {
+        "id": "code",
+        "category": "coding",
+        "passed": true,
+        "latency_s": 2.4653026319999753,
+        "eval_count": 24,
+        "prompt_eval_count": 147,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\n    \"answer\": \"def solve(x): return x * 12 + 6\"\n}",
+            "latency_s": 2.4526937379999936,
+            "truncated": false,
+            "eval_count": 24,
+            "prompt_eval_count": 147,
+            "inference_duration_s": 2.451097495,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13281280000,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "plan": {
+        "id": "plan",
+        "category": "planning",
+        "passed": false,
+        "latency_s": 2.0674545730000204,
+        "eval_count": 16,
+        "prompt_eval_count": 150,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": [\"release\", \"test\", \"prepare\", \"build\"]}",
+            "latency_s": 2.06733105699999,
+            "truncated": false,
+            "eval_count": 16,
+            "prompt_eval_count": 150,
+            "inference_duration_s": 2.06485014,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13281366016,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "calculator": {
+        "id": "calculator",
+        "category": "tool",
+        "passed": false,
+        "latency_s": 1.6880150439999966,
+        "eval_count": 9,
+        "prompt_eval_count": 137,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 270}",
+            "latency_s": 1.6878139709999687,
+            "truncated": false,
+            "eval_count": 9,
+            "prompt_eval_count": 137,
+            "inference_duration_s": 1.68615531,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13243551744,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "recall": {
+        "id": "recall",
+        "category": "memory",
+        "passed": false,
+        "latency_s": 1.5720308310000064,
+        "eval_count": 8,
+        "prompt_eval_count": 133,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": \"N/A\"}",
+            "latency_s": 1.5719240110000214,
+            "truncated": false,
+            "eval_count": 8,
+            "prompt_eval_count": 133,
+            "inference_duration_s": 1.569784301,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13237051392,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "agent": {
+        "id": "agent",
+        "category": "agent",
+        "passed": false,
+        "latency_s": 1.728595831000007,
+        "eval_count": 8,
+        "prompt_eval_count": 145,
+        "error": null,
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 35}",
+            "latency_s": 1.7283946880000371,
+            "truncated": false,
+            "eval_count": 8,
+            "prompt_eval_count": 145,
+            "inference_duration_s": 1.725666303,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13190803456,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    },
+    "candidate": {
+      "arithmetic": {
+        "id": "arithmetic",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 9.860975959000001,
+        "eval_count": 192,
+        "prompt_eval_count": 192,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 9.860802347999993,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 192,
+            "inference_duration_s": 9.857929335,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13415944192,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "word-problem": {
+        "id": "word-problem",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 9.992323180999989,
+        "eval_count": 192,
+        "prompt_eval_count": 200,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 9.99219202399999,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 200,
+            "inference_duration_s": 9.989642388,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13382799360,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "instruction": {
+        "id": "instruction",
+        "category": "instruction",
+        "passed": false,
+        "latency_s": 10.063845689000004,
+        "eval_count": 192,
+        "prompt_eval_count": 201,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.063720931000006,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 201,
+            "inference_duration_s": 10.061786602,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13322895360,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "code": {
+        "id": "code",
+        "category": "coding",
+        "passed": false,
+        "latency_s": 10.002732802999986,
+        "eval_count": 192,
+        "prompt_eval_count": 208,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.002595006000007,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 208,
+            "inference_duration_s": 10.000812799,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13322899456,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "plan": {
+        "id": "plan",
+        "category": "planning",
+        "passed": false,
+        "latency_s": 10.32667309499999,
+        "eval_count": 192,
+        "prompt_eval_count": 211,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.32651884300003,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 211,
+            "inference_duration_s": 10.322198301,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13261230080,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "calculator": {
+        "id": "calculator",
+        "category": "tool",
+        "passed": false,
+        "latency_s": 10.004247177999957,
+        "eval_count": 192,
+        "prompt_eval_count": 198,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.004119556000035,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 198,
+            "inference_duration_s": 10.002530365,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13260328960,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "recall": {
+        "id": "recall",
+        "category": "memory",
+        "passed": false,
+        "latency_s": 10.017287646,
+        "eval_count": 192,
+        "prompt_eval_count": 194,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.017150980999986,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 194,
+            "inference_duration_s": 10.015707498,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13229338624,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "agent": {
+        "id": "agent",
+        "category": "agent",
+        "passed": false,
+        "latency_s": 10.315204111000014,
+        "eval_count": 192,
+        "prompt_eval_count": 206,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "tool_trace": [],
+        "outputs": [
+          {
+            "text": "",
+            "latency_s": 10.315073213000005,
+            "truncated": true,
+            "eval_count": 192,
+            "prompt_eval_count": 206,
+            "inference_duration_s": 10.313112059,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 13232746496,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    }
+  },
+  "proposal_metrics": {
+    "text": "{\n  \"hypothesis\": \"Introduce a structured 'Reasoning Chain' step in the system prompt that explicitly requires breaking down complex tasks into sub-goals before executing any tool calls or generating final output, thereby reducing the likelihood of individual task regressions.\",\n  \"system_prompt\": \"You are an expert assistant. When faced with complex tasks, always first decompose them into a 'Reasoning Chain' of 3-5 specific sub-steps. Execute each step sequentially, using tools only when explicitly required by the current sub-step. After completing all steps, synthesize the results into a final answer. This ensures reliable reasoning and prevents regression.\",\n  \"think\": true\n}",
+    "latency_s": 9.276476943000006,
+    "truncated": false,
+    "eval_count": 143,
+    "prompt_eval_count": 143,
+    "inference_duration_s": 9.27435787,
+    "model_allocated_bytes": 1596551329,
+    "available_memory_bytes": 13265793024,
+    "cost_usd": null,
+    "energy_joules": null
+  },
+  "decision": {
+    "accepted": false,
+    "kind": null,
+    "reason": "individual task regression"
+  },
+  "version_manifest": {
+    "model": "1e2d21a4f03ab9e4a9c1976a4b7e88f21de61d65f2c5485d8fde8942be73f1e7",
+    "code": "04f79a659ea75726822d26f94610f74d06a447a4",
+    "evaluation": "eef4a60501e3a404893e7cc12bb59c6fb054707d58bd4cac93e582dc77d57572",
+    "tools": "eef4a60501e3a404893e7cc12bb59c6fb054707d58bd4cac93e582dc77d57572",
+    "agents": "eef4a60501e3a404893e7cc12bb59c6fb054707d58bd4cac93e582dc77d57572",
+    "memory": "eef4a60501e3a404893e7cc12bb59c6fb054707d58bd4cac93e582dc77d57572",
+    "prompts": {
+      "baseline": "8e0d33cb62b56342542afed67d45c8465843c5397f5859dcb629bc565a15fba9",
+      "candidate": "971d1f9cd440fb6c9196857e746edfe7e47331cf4f4e392c52d96d0b76a98e0d"
+    },
+    "configuration": "3900ac94db5ef2a3e0f3b2b944c0be0473ff700cfaaf7460c5a5772351a98703"
+  },
+  "attempts": [],
+  "limitations": "Exploratory synthetic holdout, one seed, no frontier/AGI or model-weight improvement claim.",
+  "resource_metrics": {
+    "cost_usd": null,
+    "energy_joules": null
+  }
+}
