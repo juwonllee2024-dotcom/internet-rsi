@@ -1,6 +1,7 @@
 export const BASE_CONFIG = {model: 'qwen3.5:2b-q4_K_M', system_prompt: 'Follow instructions carefully. Use available tools when needed.',
   think: false, num_ctx: 2048, num_predict: 192, num_thread: 4, temperature: 0, seed: 0};
 const TASKS = ['arithmetic', 'word-problem', 'instruction', 'code', 'plan', 'calculator', 'recall', 'agent'];
+const CATEGORIES = {arithmetic:'reasoning','word-problem':'reasoning',instruction:'instruction',code:'coding',plan:'planning',calculator:'tool',recall:'memory',agent:'agent'};
 const LEASE_MS = 1200000;
 const median = a => { const b = [...a].sort((x,y) => x-y); const m = Math.floor(b.length/2); return b.length%2 ? b[m] : (b[m-1]+b[m])/2; };
 
@@ -33,6 +34,35 @@ export function compare(baseline, candidate, expected = TASKS) {
 
 const response = (data,status=200) => Response.json(data,{status});
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+
+export function validateEvidence(report) {
+  if(same(report.baseline_config,report.candidate_config))return 'no controlled configuration change';
+  const identity=report.identity || {};
+  if(identity.model!==BASE_CONFIG.model || !/^[a-f0-9]{64}$/.test(identity.digest || ''))return 'invalid model identity';
+  if(!/^[a-f0-9]{40}$/.test(report.code_revision || '') || !/^[a-f0-9]{64}$/.test(report.suite_hash || ''))return 'missing immutable code or suite identity';
+  if(!['synthetic-v1','synthetic-v2'].includes(report.suite_version) || typeof report.hypothesis!=='string' || typeof report.proposal_metrics?.text!=='string')return 'missing hypothesis, suite version or generated proposal';
+  if(report.suite_version==='synthetic-v2' && (!identity.hardware?.cpu || !/^[a-f0-9]{64}$/.test(identity.hardware?.host_hash || '') || !report.version_manifest))return 'missing hardware or component versions';
+  if(report.suite_version==='synthetic-v2') {
+    const manifest=report.version_manifest;
+    if(manifest.model!==identity.digest || manifest.code!==report.code_revision)return 'component identity mismatch';
+    if(['evaluation','tools','agents','memory','configuration'].some(k=>!/^[a-f0-9]{64}$/.test(manifest[k] || '')))return 'incomplete component manifest';
+    if(['baseline','candidate'].some(k=>!/^[a-f0-9]{64}$/.test(manifest.prompts?.[k] || '')))return 'incomplete prompt manifest';
+  }
+  for(const variant of ['baseline','candidate']) {
+    const samples=report.samples?.[variant] || {};
+    if(Object.keys(samples).length!==TASKS.length)return 'incomplete sample set';
+    for(const name of TASKS) {
+      const sample=samples[name];
+      if(!sample || sample.id!==name || sample.category!==CATEGORIES[name] || typeof sample.passed!=='boolean')return 'invalid task identity or category';
+      if(!Array.isArray(sample.outputs))return 'missing inference evidence';
+      if(sample.passed && (!sample.outputs.length || sample.eval_count<=0 || sample.error))return 'success without completed inference';
+      if(sample.passed && sample.outputs.some(x=>x.truncated))return 'success from truncated inference';
+      if(sample.outputs.some(x=>typeof x.text!=='string' || !Number.isInteger(x.eval_count)))return 'invalid inference output';
+      if(sample.outputs.reduce((n,x)=>n+x.eval_count,0)!==sample.eval_count)return 'inconsistent token usage';
+    }
+  }
+  return null;
+}
 
 // SQLite-backed Durable Object. Each transaction atomically persists progress and version changes.
 export class Coordinator {
@@ -72,7 +102,8 @@ export class Coordinator {
             const job=await tx.get('job:'+id);
             if(job) jobs.push({id,status:job.status,expires:job.expires,decision:job.report?.decision || null,
               baseline_version:job.payload.baseline.version,completed_at:job.completed_at || null,
-              progress:{baseline:Object.keys(job.payload.samples.baseline).length,candidate:Object.keys(job.payload.samples.candidate).length}});
+              scores:{baseline:Object.values(job.report?.samples?.baseline || {}).filter(x=>x.passed).length,candidate:Object.values(job.report?.samples?.candidate || {}).filter(x=>x.passed).length},
+              progress:{baseline:Object.keys(job.report?.samples?.baseline || job.payload.samples.baseline).length,candidate:Object.keys(job.report?.samples?.candidate || job.payload.samples.candidate).length}});
           }
           return response({model:BASE_CONFIG.model,validated:meta.validated,paused:meta.paused,jobs,
             completed_today:meta.completed_day === new Date().toISOString().slice(0,10) ? meta.completed_count : 0,
@@ -80,7 +111,7 @@ export class Coordinator {
         });
       }
       const raw = await request.text();
-      if (raw.length > 110000) return response({error:'Checkpoint exceeds storage budget'},413);
+      if (new TextEncoder().encode(raw).byteLength > 110000) return response({error:'Checkpoint exceeds storage budget'},413);
       const data = raw ? JSON.parse(raw) : {};
       return await this.storage.transaction(async tx => {
         const meta = await this.ensure(tx);
@@ -99,9 +130,10 @@ export class Coordinator {
           const today=new Date().toISOString().slice(0,10);
           if (meta.paused || (meta.completed_day === today && meta.completed_count >= 4)) return response(null);
           if (typeof data.owner !== 'string' || data.owner.length > 80 || data.owner.length < 1) throw Error('Invalid owner');
-          if (job.status === 'running' && job.expires > Date.now() && job.owner !== data.owner) return response(null);
-          const resume = job.status === 'running' && job.expires > Date.now() && job.owner === data.owner;
-          job.token = resume ? job.token : crypto.randomUUID(); job.owner=data.owner; job.status='running'; job.expires=Date.now()+LEASE_MS;
+          if (!/^[a-f0-9]{32}$/.test(data.session || ''))throw Error('Distinct client session required');
+          if (job.status === 'running' && job.expires > Date.now() && (job.owner !== data.owner || job.session !== data.session)) return response(null);
+          const resume = job.status === 'running' && job.expires > Date.now() && job.owner === data.owner && job.session === data.session;
+          job.token = resume ? job.token : crypto.randomUUID(); job.owner=data.owner; job.session=data.session; job.status='running'; job.expires=Date.now()+LEASE_MS;
           await tx.put('job:'+job.id,job);
           return response({id:job.id,token:job.token,expires:job.expires/1000,payload:job.payload});
         }
@@ -136,18 +168,23 @@ export class Coordinator {
           if(data.identity?.digest !== requested.payload.identity?.digest || data.identity?.model !== BASE_CONFIG.model) throw Error('Model digest cannot change during handoff');
           const attempts=requested.payload.attempts || [];
           // Each archived attempt uses its own durable key, preserving history beyond per-value limits.
-          await tx.put('attempt:'+requested.id+':'+attempts.length,{identity:requested.payload.identity,samples:requested.payload.samples});
-          requested.payload.attempts=[...attempts,{archive_key:'attempt:'+requested.id+':'+attempts.length,identity:requested.payload.identity}];
+          await tx.put('attempt:'+requested.id+':'+attempts.length,{identity:requested.payload.identity,samples:requested.payload.samples,code_revision:requested.payload.code_revision});
+          requested.payload.attempts=[...attempts,{archive_key:'attempt:'+requested.id+':'+attempts.length,identity:requested.payload.identity,code_revision:requested.payload.code_revision}];
           requested.payload.identity=data.identity; requested.payload.samples={baseline:{},candidate:{}};
+          for(const key of ['suite_version','suite_hash','version_manifest'])delete requested.payload[key];
+          if(data.code_revision)requested.payload.code_revision=data.code_revision;
           requested.expires=Date.now()+LEASE_MS; await tx.put('job:'+requested.id,requested);return response(requested.payload);
         }
         if (path === '/checkpoint') {
           const payload=data.payload;
           if (!payload || payload.seed !== requested.payload.seed || !same(payload.baseline,requested.payload.baseline)) throw Error('Baseline or holdout cannot change');
-          if (payload.identity?.model !== BASE_CONFIG.model || typeof payload.identity.digest !== 'string') throw Error('Selected model identity required');
+          if (payload.identity?.model !== BASE_CONFIG.model || !/^[a-f0-9]{64}$/.test(payload.identity.digest || '')) throw Error('Selected model identity required');
+          if(meta.validated.identity?.digest && payload.identity.digest!==meta.validated.identity.digest)throw Error('Validated model digest cannot change');
           if (requested.payload.identity && !same(payload.identity,requested.payload.identity)) throw Error('Runtime identity changed mid-cycle');
           if (payload.candidate) validateConfig(payload.candidate.config);
           if (requested.payload.candidate && !same(payload.candidate,requested.payload.candidate)) throw Error('Candidate changed mid-cycle');
+          for(const key of ['code_revision','suite_version','suite_hash','version_manifest','proposal_metrics'])
+            if(requested.payload[key]!==undefined && !same(payload[key],requested.payload[key]))throw Error('Saved provenance cannot change');
           for (const variant of ['baseline','candidate']) {
             const samples=payload.samples?.[variant];
             if (!samples || Object.keys(samples).some(k=>!TASKS.includes(k))) throw Error('Invalid sample set');
@@ -164,11 +201,17 @@ export class Coordinator {
             || !same(report.baseline_config,payload.baseline.config) || !same(report.candidate_config,payload.candidate.config)
             || report.suite_seed !== payload.seed || typeof report.suite_hash !== 'string') throw Error('Report differs from saved evidence');
           if (Object.keys(report.samples.baseline).length !== 8 || Object.keys(report.samples.candidate).length !== 8) throw Error('Incomplete evidence');
-          const decision=compare(Object.values(report.samples.baseline),Object.values(report.samples.candidate));
+          for(const key of ['code_revision','suite_version','suite_hash','version_manifest','proposal_metrics'])
+            if(payload[key]!==undefined && !same(report[key],payload[key]))throw Error('Report provenance differs from checkpoint');
+          if(payload.candidate.hypothesis!==undefined && report.hypothesis!==payload.candidate.hypothesis)throw Error('Hypothesis differs from checkpoint');
+          const provenanceError=validateEvidence(report);
+          const decision=provenanceError ? {accepted:false,kind:null,reason:'invalid provenance: '+provenanceError} : compare(Object.values(report.samples.baseline),Object.values(report.samples.candidate));
           report.decision=decision; requested.status='done'; requested.report=report; requested.completed_at=new Date().toISOString();
           if (decision.accepted) meta.validated={version:meta.validated.version+1,config:payload.candidate.config,identity:payload.identity,source_job:requested.id};
+          else if(!provenanceError && !meta.validated.identity)meta.validated.identity=payload.identity;
           const failed={}; for(const sample of Object.values(report.samples.baseline)) if(!sample.passed) failed[sample.category]=(failed[sample.category] || 0)+1;
           meta.observations={failure_categories:failed,last_decision:decision.reason};
+          requested.payload.samples={baseline:{},candidate:{}}; // one durable copy of full completed evidence
           const today=new Date().toISOString().slice(0,10); meta.completed_count=meta.completed_day===today ? meta.completed_count+1 : 1; meta.completed_day=today;
           await tx.put('job:'+requested.id,requested); await tx.put('meta',meta); await this.ensure(tx);
           return response(decision);

@@ -92,10 +92,10 @@ def make_suite(seed):
         task('code', 'coding', f'Return answer as Python code: one function solve(x) returning x * {b} + {c}. Use one return statement, no imports.',
              None, tests=[([x], x * b + c) for x in (-7, 0, 13)]),
         task('plan', 'planning', 'Return answer as the ordered list of all steps. build requires prepare; test requires build; release requires test. Steps: release, test, prepare, build.', ['prepare', 'build', 'test', 'release']),
-        task('calculator', 'tool', f'Use calculate to compute {a} * {b} - {c}. Then give result.', a * b - c, required_tools=['calculate']),
+        task('calculator', 'tool', f'Use calculate to compute {a} * {b} - {c}. Then give result.', a * b - c, calculation=f'{a} * {b} - {c}', required_tools=['calculate']),
         task('recall', 'memory', 'Retrieve the value at key memo from memory_get. Return that exact string.', code, memory={'memo': code}, required_tools=['memory_get']),
         task('agent', 'agent', f'Calculate {a} + {b}; store result at key total using memory_put; retrieve it with memory_get; return result.',
-             a + b, required_tools=['calculate', 'memory_put', 'memory_get'])]
+             a + b, calculation=f'{a} + {b}', required_tools=['calculate', 'memory_put', 'memory_get'])]
 
 
 def suite_hash(suite):
@@ -108,7 +108,7 @@ TOOL_INSTRUCTIONS = '''Return only JSON. Final response: {"answer": value}. To u
 def evaluate_task(runtime, config, task):
     started = time.monotonic()
     memory = dict(task.get('memory', {}))
-    calls, outputs = [], []
+    calls, outputs, trace = [], [], []
     messages = [{'role': 'system', 'content': config['system_prompt'] + '\n' + TOOL_INSTRUCTIONS},
                 {'role': 'user', 'content': task['prompt']}]
     passed, error = False, None
@@ -116,13 +116,20 @@ def evaluate_task(runtime, config, task):
         for _ in range(5):
             response = runtime.generate(messages, config)
             outputs.append(response)
+            if response.get('truncated'):
+                raise RuntimeError('Inference output truncated; not valid evidence')
             envelope = json.loads(response['text'])
             if 'answer' in envelope:
                 answer = envelope['answer']
                 passed = grade_code(answer, task['tests']) if task['category'] == 'coding' else answer == task['expected']
                 passed = passed and all(t in calls for t in task.get('required_tools', []))
+                if task.get('calculation'):
+                    expected_expression=ast.dump(ast.parse(task['calculation'],mode='eval'))
+                    passed=passed and any(item['tool']=='calculate' and item['result']==task['expected']
+                        and ast.dump(ast.parse(item['arguments']['expression'],mode='eval'))==expected_expression for item in trace)
                 if task['id'] == 'agent':
                     passed = passed and memory.get('total') == task['expected'] and calls == ['calculate', 'memory_put', 'memory_get']
+                    passed = passed and trace[1]['arguments'].get('key')=='total' and trace[1]['arguments'].get('value')==task['expected'] and trace[2]['arguments'].get('key')=='total' and trace[2]['result']==task['expected']
                 break
             tool, arguments = envelope['tool'], envelope['arguments']
             if tool == 'calculate':
@@ -138,6 +145,7 @@ def evaluate_task(runtime, config, task):
             else:
                 raise ValueError('Tool not permitted')
             calls.append(tool)
+            trace.append({'tool':tool,'arguments':arguments,'result':result})
             messages.extend([{'role': 'assistant', 'content': response['text']},
                              {'role': 'user', 'content': 'Tool result: ' + json.dumps(result)}])
         else:
@@ -147,5 +155,5 @@ def evaluate_task(runtime, config, task):
     return {'id': task['id'], 'category': task['category'], 'passed': bool(passed),
             'latency_s': time.monotonic() - started, 'eval_count': sum(x['eval_count'] for x in outputs),
             'prompt_eval_count': sum(x.get('prompt_eval_count', 0) for x in outputs),
-            'error': error, 'tool_calls': calls, 'outputs': outputs,
+            'error': error, 'tool_calls': calls, 'tool_trace':trace, 'outputs': outputs,
             'cost_usd': None, 'energy_joules': None}

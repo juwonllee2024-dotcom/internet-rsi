@@ -8,6 +8,7 @@ from pathlib import Path
 from .runtime import BASE_CONFIG
 from .gate import compare
 from .evaluation import make_suite
+from .evidence import evidence_error
 
 
 def initial_payload(version):
@@ -20,14 +21,17 @@ def validate_report(payload, report):
     samples = report.get('samples', {})
     decision = compare(list(samples.get('baseline', {}).values()),
                        list(samples.get('candidate', {}).values()), expected)
+    error=evidence_error(report)
+    if error:decision={'accepted':False,'kind':None,'reason':'invalid provenance: '+error}
     if report.get('decision', {}).get('accepted') and not decision['accepted']:
         raise ValueError('Promotion rejected: ' + decision['reason'])
     return decision
 
 
 class Store:
-    def __init__(self, path='.state/research.sqlite', clock=time.time, lease_seconds=600):
+    def __init__(self, path='.state/research.sqlite', clock=time.time, lease_seconds=1200):
         self.path, self.clock, self.lease_seconds = str(path), clock, lease_seconds
+        self.session=secrets.token_hex(16)
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         with self.transaction() as db:
             db.executescript('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY,value TEXT NOT NULL);'
@@ -58,6 +62,7 @@ class Store:
             db.execute("INSERT INTO jobs(status,payload) VALUES ('queued',?)", (json.dumps(initial_payload(self._meta(db, 'validated'))),))
 
     def claim(self, owner):
+        owner=owner+':'+self.session
         with self.transaction() as db:
             if self._meta(db, 'paused'):
                 return None
@@ -82,15 +87,17 @@ class Store:
             db.execute('UPDATE jobs SET payload=?,expires=? WHERE id=?',
                        (json.dumps(payload, allow_nan=False), self.clock() + self.lease_seconds, job_id))
 
-    def restart_attempt(self, job_id, token, identity):
+    def restart_attempt(self, job_id, token, identity, code_revision=None):
         with self.transaction() as db:
             row=self._check(db,job_id,token)
             payload=json.loads(row['payload'])
             if payload.get('identity',{}).get('digest') != identity.get('digest'):
                 raise ValueError('Model digest cannot change during handoff')
-            payload.setdefault('attempts',[]).append({'identity':payload['identity'],'samples':payload['samples']})
+            payload.setdefault('attempts',[]).append({'identity':payload['identity'],'samples':payload['samples'],'code_revision':payload.get('code_revision')})
             payload['identity']=identity
             payload['samples']={'baseline':{},'candidate':{}}
+            if code_revision:payload['code_revision']=code_revision
+            for key in ('suite_version','suite_hash','version_manifest'):payload.pop(key,None)
             db.execute('UPDATE jobs SET payload=?,expires=? WHERE id=?',
                        (json.dumps(payload),self.clock()+self.lease_seconds,job_id))
             return payload
@@ -120,6 +127,10 @@ class Store:
                 db.execute('UPDATE meta SET value=? WHERE key=?',
                            (json.dumps({'version': payload['baseline']['version'] + 1, 'config': candidate,
                                         'identity': report['identity'], 'source_job': job_id}), 'validated'))
+            elif not evidence_error(report):
+                validated=self._meta(db,'validated')
+                validated.setdefault('identity',report['identity'])
+                db.execute("UPDATE meta SET value=? WHERE key='validated'",(json.dumps(validated),))
             db.execute("UPDATE jobs SET status='done',report=? WHERE id=?", (json.dumps(report, allow_nan=False), job_id))
             self._ensure_next(db)
             return decision

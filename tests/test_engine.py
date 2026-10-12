@@ -37,7 +37,7 @@ class EngineTests(unittest.TestCase):
 
     def test_proposal_cannot_replace_model_or_escape_config_bounds(self):
         from rsi.runtime import BASE_CONFIG
-        for proposal in [{'hypothesis': 'x', 'system_prompt': 'x', 'think': False, 'model': 'other'},
+        for proposal in [None,[],{'hypothesis': 'x', 'system_prompt': 'x', 'think': False, 'model': 'other'},
                          {'hypothesis': 'x', 'system_prompt': 'x' * 4000, 'think': False},
                          {'hypothesis': 'x', 'system_prompt': 'x', 'think': 'yes'}]:
             with self.assertRaises(ValueError):

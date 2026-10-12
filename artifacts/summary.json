@@ -1,0 +1,84 @@
+[
+  {
+    "cycle": 2,
+    "suite_version": "synthetic-v1",
+    "decision": {
+      "accepted": false,
+      "kind": null,
+      "reason": "individual task regression"
+    },
+    "variants": {
+      "baseline": {
+        "successes": 2,
+        "tasks": 8,
+        "median_latency_s": 2.629736576500008,
+        "total_latency_s": 22.13215559699998,
+        "generated_tokens_observed": 100,
+        "token_count_complete": true,
+        "successful_tasks_per_1000_output_tokens": 20.0,
+        "successful_tasks_per_second": 0.09036625425998274,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.1681345604892857,
+        "failures": 6,
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "candidate": {
+        "successes": 2,
+        "tasks": 8,
+        "median_latency_s": 11.247383007500005,
+        "total_latency_s": 89.95436978199999,
+        "generated_tokens_observed": 708,
+        "token_count_complete": false,
+        "successful_tasks_per_1000_output_tokens": null,
+        "successful_tasks_per_second": 0.022233494657868228,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.1681345604892857,
+        "failures": 6,
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    }
+  },
+  {
+    "cycle": 1,
+    "suite_version": "synthetic-v1",
+    "decision": {
+      "accepted": false,
+      "kind": null,
+      "reason": "candidate execution failure"
+    },
+    "variants": {
+      "baseline": {
+        "successes": 1,
+        "tasks": 8,
+        "median_latency_s": 7.398499999995693,
+        "total_latency_s": 62.9550000000163,
+        "generated_tokens_observed": 94,
+        "token_count_complete": true,
+        "successful_tasks_per_1000_output_tokens": 10.638297872340425,
+        "successful_tasks_per_second": 0.015884361845758734,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.08406728024464286,
+        "failures": 7,
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "candidate": {
+        "successes": 4,
+        "tasks": 8,
+        "median_latency_s": 34.015500000008615,
+        "total_latency_s": 279.7840000000433,
+        "generated_tokens_observed": 615,
+        "token_count_complete": false,
+        "successful_tasks_per_1000_output_tokens": null,
+        "successful_tasks_per_second": 0.014296743201896394,
+        "peak_model_allocated_bytes_observed": 1596551329,
+        "success_rate_per_gib_model_allocation": 0.3362691209785714,
+        "failures": 4,
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    }
+  }
+]

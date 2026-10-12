@@ -14,7 +14,7 @@ Coordinator: https://internet-rsi.juwonllee2026.workers.dev/status
 - Baseline and candidate run the same eight tasks. Graders measure reasoning, instruction following, coding, planning, calculator use, memory retrieval and a multi-step agent episode.
 - Complete paired evidence is required. Individual regressions, candidate execution errors, truncation, ties and invalid measurements reject promotion. More successful tasks must fit a 1.5x median-latency ceiling; equal quality must improve median latency at least 10%.
 - SQLite standalone state; authenticated Cloudflare Worker with **SQLite-backed Durable Object** as Internet authority. D1 was initially considered, but the available OAuth credential lacks its scope. The deployed Durable Object uses existing Workers permission and preserves state transactionally.
-- Every sample checkpoints before/after inference. Leases expire and use fencing tokens. A compute handoff archives partial measurements and remeasures the pair on new hardware. Completed cycles remain intact.
+- Every sample checkpoints before/after inference, with a private on-disk outbox before Internet writes. Leases expire after 20 minutes and use fencing tokens plus distinct client sessions. An OS lock allows one inference client per checkout. Compute/source handoff archives partial measurements and remeasures the pair; completed cycles remain intact. Research refuses uncommitted runtime source.
 - GitHub Actions runs bounded hosted CPU inference every six hours, independent of this PC. Cloudflare cron maintains the queue every 15 minutes. Pages serves the interface and authenticated pause/resume controls.
 
 ## Local use

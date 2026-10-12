@@ -1,11 +1,14 @@
 """Ollama client: one bounded request at a time; no provider substitution."""
 import ctypes
+import hashlib
 import json
 import os
 import platform
+import socket
 import subprocess
 import time
 import urllib.request
+from pathlib import Path
 
 MODEL = 'qwen3.5:2b-q4_K_M'
 BASE_CONFIG = {'model': MODEL, 'system_prompt': 'Follow instructions carefully. Use available tools when needed.',
@@ -49,7 +52,14 @@ class OllamaRuntime:
         if not model:
             raise RuntimeError('Selected model missing. Run: ollama pull ' + MODEL)
         details = self.request('/api/show', {'model': MODEL})['details']
-        self.identity = {'model': MODEL, 'digest': model['digest'], 'size_bytes': model['size'],
+        cpu=platform.processor()
+        if os.path.exists('/proc/cpuinfo'):
+            with open('/proc/cpuinfo') as info:
+                cpu=next((line.split(':',1)[1].strip() for line in info if line.startswith('model name')),cpu)
+        hardware={'cpu':cpu,'logical_cpus':os.cpu_count(),'architecture':platform.machine(),
+                  'host_hash':hashlib.sha256(socket.gethostname().encode()).hexdigest()}
+        source_hash=hashlib.sha256(b''.join(p.read_bytes() for p in sorted(Path(__file__).parent.glob('*.py')))).hexdigest()
+        self.identity = {'model': MODEL, 'digest': model['digest'], 'size_bytes': model['size'], 'hardware':hardware,'source_hash':source_hash,
                          'details': details, 'ollama': self.request('/api/version')['version'],
                          'platform': platform.system(), 'threads': 4}
         return self.identity
@@ -62,11 +72,12 @@ class OllamaRuntime:
             'model': MODEL, 'messages': messages, 'stream': False, 'format': 'json',
             'think': config['think'], 'keep_alive': '2m',
             'options': {k: config[k] for k in ('num_ctx', 'num_predict', 'num_thread', 'temperature', 'seed')}})
-        if not result.get('done') or result.get('done_reason') == 'length':
-            raise RuntimeError('Inference output truncated; not valid evidence')
-        allocated = next((x.get('size') for x in self.request('/api/ps').get('models', [])
-                          if x['name'] == MODEL), None)
-        return {'text': result['message']['content'], 'latency_s': time.monotonic() - started,
+        truncated = not result.get('done') or result.get('done_reason') == 'length'
+        try:
+            allocated = next((x.get('size') for x in self.request('/api/ps').get('models', []) if x['name'] == MODEL), None)
+        except Exception:
+            allocated = None  # optional telemetry failure must not erase completed inference
+        return {'text': result['message']['content'], 'latency_s': time.monotonic() - started,'truncated':truncated,
                 'eval_count': result.get('eval_count', 0), 'prompt_eval_count': result.get('prompt_eval_count', 0),
                 'inference_duration_s': result.get('total_duration', 0) / 1e9,
                 'model_allocated_bytes': allocated, 'available_memory_bytes': free_memory_bytes(),
@@ -78,3 +89,10 @@ def code_revision():
         return subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True, stderr=subprocess.DEVNULL).strip()
     except (OSError, subprocess.CalledProcessError):
         return 'uncommitted'
+
+
+def source_dirty(directory='.'):
+    try:
+        return bool(subprocess.check_output(['git','-C',str(directory),'status','--porcelain','--untracked-files=all','--','rsi'],text=True))
+    except (OSError,subprocess.CalledProcessError):
+        return True

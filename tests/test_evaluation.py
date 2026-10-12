@@ -32,6 +32,27 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(len({t['id'] for t in first}), len(first))
         self.assertGreaterEqual(len({t['category'] for t in first}), 7)
 
+    def test_irrelevant_calculator_call_cannot_satisfy_tool_task(self):
+        class Replay:
+            def __init__(self):
+                self.responses=iter(['{"tool":"calculate","arguments":{"expression":"1+1"}}','{"answer":183}'])
+            def generate(self,*args):
+                return {'text':next(self.responses),'eval_count':20,'latency_s':1}
+        from rsi.runtime import BASE_CONFIG
+        task={'id':'calculator','category':'tool','prompt':'Use calculate for 37 * 5 - 2.',
+              'expected':183,'calculation':'37 * 5 - 2','required_tools':['calculate']}
+        self.assertFalse(evaluate_task(Replay(),BASE_CONFIG,task)['passed'])
+
+    def test_truncation_retains_consumed_tokens_and_rejects_success(self):
+        class Truncated:
+            def generate(self,*args):
+                return {'text':'{"answer":','eval_count':192,'prompt_eval_count':70,'latency_s':1,'truncated':True}
+        from rsi.runtime import BASE_CONFIG
+        result=evaluate_task(Truncated(),BASE_CONFIG,make_suite(123)[0])
+        self.assertFalse(result['passed'])
+        self.assertEqual(result['eval_count'],192)
+        self.assertIn('truncated',result['error'])
+
 
 if __name__ == '__main__':
     unittest.main()

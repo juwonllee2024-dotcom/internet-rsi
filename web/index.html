@@ -51,7 +51,7 @@
       for(const job of data.jobs) {
         const row=document.createElement('tr');
         const decision=job.decision;
-        const score=decision?.baseline_score !== undefined ? Math.round(decision.baseline_score*100)+'% / '+Math.round(decision.candidate_score*100)+'%' : '—';
+        const score=decision?.baseline_score !== undefined ? Math.round(decision.baseline_score*100)+'% / '+Math.round(decision.candidate_score*100)+'%' : (decision && job.scores ? job.scores.baseline+'/8 / '+job.scores.candidate+'/8' : '—');
         for(const text of [job.id,job.status,job.progress.baseline+' + '+job.progress.candidate,decision ? (decision.accepted?'Accepted · '+decision.kind:'Rejected') : 'Pending',score+(decision ? ' · '+decision.reason : '')]) { const cell=document.createElement('td'); cell.textContent=text; row.append(cell); }
         el('jobs').append(row);
       }

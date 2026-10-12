@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import time
+from .lock import ClientLock
 from pathlib import Path
 from .runtime import OllamaRuntime, BASE_CONFIG
 from .store import Store
@@ -18,6 +19,14 @@ def load_env():
 
 
 def main():
+    # Run/doctor both infer; read-only status/control commands may run concurrently.
+    import sys
+    if len(sys.argv)>1 and sys.argv[1] in ('run','doctor'):
+        with ClientLock():return execute()
+    return execute()
+
+
+def execute():
     load_env()
     parser = argparse.ArgumentParser(description='Measured Qwen3.5-2B RSI')
     parser.add_argument('command', choices=['doctor', 'run', 'status', 'pause', 'resume', 'export'])

@@ -4,9 +4,9 @@
 
 **Goal:** Execute and record a real Qwen3.5-2B paired experiment and continue through durable Internet coordination.
 
-**Architecture:** Python bounded inference/evaluation client, SQLite standalone state, Cloudflare Worker+D1 Internet authority, GitHub Actions CPU compute, GitHub Pages dashboard.
+**Architecture:** Python bounded inference/evaluation client, SQLite standalone state, Cloudflare Worker+Durable Object Internet authority, GitHub Actions CPU compute, GitHub Pages dashboard.
 
-**Tech Stack:** Python standard library, Ollama, JavaScript, Wrangler 4.149.0, D1 SQLite, GitHub Actions/Pages.
+**Tech Stack:** Python standard library, Ollama, JavaScript, Wrangler 4.149.0, SQLite-backed Durable Object, GitHub Actions/Pages.
 
 **Spec:** docs/superpowers/specs/2026-10-12-internet-rsi-design.md
 
@@ -42,16 +42,16 @@ Interfaces: store `claim(owner)`, `checkpoint(job, token, payload)`, `finish(job
 
 ### Task 3: Internet coordination
 Files: `cloud/worker.js`, `cloud/schema.sql`, `wrangler.jsonc`, `package.json`, `tests/cloud.test.mjs`, `rsi/remote.py`.
-- [ ] RED tests for authenticated control, D1 leases and invalid/duplicate completion on a real local Worker.
-- [ ] Implement Worker D1 state, cron recovery, authenticated claim/checkpoint/completion/status/pause; use lease fencing and recompute promotion at coordinator.
-- [ ] Test real Wrangler/D1 integration and remote Python cycle.
-- [ ] Deploy D1/Worker through existing authentication; keep secrets private. Commit.
+- [ ] RED tests for authenticated control, Durable Object leases and invalid/duplicate completion on a real local Worker.
+- [ ] Implement Worker Durable Object state, cron recovery, authenticated claim/checkpoint/completion/status/pause; use lease fencing and recompute promotion at coordinator.
+- [ ] Test real Wrangler/Durable Object integration and remote Python cycle.
+- [ ] Deploy Worker/Durable Object through existing authentication; keep secrets private. Commit.
 
 ### Task 4: GitHub, Pages and independent compute
 Files: `.github/workflows/check.yml`, `.github/workflows/rsi.yml`, `.github/workflows/pages.yml`, `web/index.html`, `scripts/deploy.py`, README and research evidence.
 - [ ] Build authenticated status/control interface with session-only token storage.
 - [ ] Create requested GitHub project, push verified source, enable Pages and configure coordinator secrets.
-- [ ] Run bounded hosted CPU inference workflow with chosen quantized model; record results in D1. Verify public page and next job.
+- [ ] Run bounded hosted CPU inference workflow with chosen quantized model; record results in durable storage. Verify public page and next job.
 - [ ] Verify recovery and full suite, update evidence and commit.
 
 ### Task 5: Resource-gated model experiments and research continuation

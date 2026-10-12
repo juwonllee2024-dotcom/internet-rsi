@@ -20,8 +20,10 @@ class StoreTests(unittest.TestCase):
         job = self.store.claim('one')
         self.store.checkpoint(job['id'], job['token'], {'candidate': {'hypothesis': 'test'}})
         restarted = Store(self.path, clock=lambda: self.now, lease_seconds=60)
+        self.assertIsNone(restarted.claim('one'))
+        self.now += 61
         resumed = restarted.claim('one')
-        self.assertEqual(job['token'], resumed['token'])
+        self.assertNotEqual(job['token'], resumed['token'])
         self.assertEqual(resumed['payload']['candidate']['hypothesis'], 'test')
         self.assertIsNone(restarted.claim('two'))
 
@@ -72,6 +74,16 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.store.export(job['id'])['failure'],'invalid generated hypothesis')
         self.assertEqual(self.store.claim('one')['id'],2)
         self.assertEqual(self.store.status()['validated']['version'],1)
+
+    def test_source_change_handoff_preserves_old_source_and_resets_pair(self):
+        job=self.store.claim('one')
+        payload=job['payload'];payload['identity']={'digest':'same'};payload['code_revision']='a'*40
+        payload['samples']['baseline']['arithmetic']={'passed':True}
+        self.store.checkpoint(job['id'],job['token'],payload)
+        new=self.store.restart_attempt(job['id'],job['token'],{'digest':'same'},'b'*40)
+        self.assertEqual(new['code_revision'],'b'*40)
+        self.assertEqual(new['attempts'][0]['code_revision'],'a'*40)
+        self.assertEqual(new['samples'],{'baseline':{},'candidate':{}})
 
 
 if __name__ == '__main__':
