@@ -1,0 +1,68 @@
+{
+  "cycle": 3,
+  "suite_version": "synthetic-v2",
+  "tasks": [
+    {
+      "id": "arithmetic",
+      "label_ko": "산술 계산 — 괄호와 곱셈",
+      "question_ko": "(23 + 12) × 6의 값은 얼마일까요?",
+      "prompt": "Compute (23 + 12) * 6.",
+      "expected": 210,
+      "baseline": {
+        "passed": false,
+        "latency_s": 1.6321577479999974,
+        "eval_count": 9,
+        "outputs": [
+          {
+            "text": "{\"answer\": 252}",
+            "truncated": false
+          }
+        ],
+        "truncated": false
+      },
+      "candidate": {
+        "passed": false,
+        "latency_s": 9.860975959000001,
+        "eval_count": 192,
+        "outputs": [
+          {
+            "text": "",
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    },
+    {
+      "id": "word-problem",
+      "label_ko": "생활 속 계산 — 상자에 남은 물건",
+      "question_ko": "상자 23개에 물건이 각각 12개씩 들어 있습니다. 전체에서 물건 6개를 꺼내면 몇 개가 남을까요?",
+      "prompt": "23 boxes each hold 12 items. Remove 6 items in total. How many remain?",
+      "expected": 270,
+      "baseline": {
+        "passed": false,
+        "latency_s": 1.6550057370000104,
+        "eval_count": 8,
+        "outputs": [
+          {
+            "text": "{\"answer\": 20}",
+            "truncated": false
+          }
+        ],
+        "truncated": false
+      },
+      "candidate": {
+        "passed": false,
+        "latency_s": 9.992323180999989,
+        "eval_count": 192,
+        "outputs": [
+          {
+            "text": "",
+            "truncated": true
+          }
+        ],
+        "truncated": true
+      }
+    }
+  ]
+}

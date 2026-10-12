@@ -1,5 +1,7 @@
 # Qwen3.5-2B persistent RSI
 
+**한국어 설명과 사용법: [README.ko.md](README.ko.md)** · [한국어 실험실](https://juwonllee2024-dotcom.github.io/internet-rsi/)
+
 A small experimental system using **Qwen3.5-2B**, local CPU inference, Internet coordination, controlled paired evaluation and recoverable research history. No claim of AGI, frontier equivalence or model-weight improvement.
 
 Live interface: https://juwonllee2024-dotcom.github.io/internet-rsi/

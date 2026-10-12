@@ -1,69 +1,65 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://*.workers.dev; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; object-src 'none'">
-  <title>Qwen3.5-2B RSI research</title>
-  <style>
-    :root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0b111a;color:#e2e9f1}*{box-sizing:border-box}body{max-width:1080px;margin:auto;padding:44px 24px}h1{font-size:clamp(28px,5vw,44px);letter-spacing:-1px;margin:10px 0}h2{font-size:20px;margin-top:0}.tag{color:#8fc3ff;font-size:13px;text-transform:uppercase;letter-spacing:2px}.muted{color:#9eafc4}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:28px 0}.card{background:#131d2b;border:1px solid #293b52;border-radius:12px;padding:22px}.number{font-size:32px;font-weight:650}label{display:block;margin:12px 0 6px}input{width:100%;padding:11px;background:#0b111a;border:1px solid #3d526c;border-radius:6px;color:inherit}button{padding:11px 18px;border:1px solid #3d526c;border-radius:6px;background:#23496e;color:white;cursor:pointer;margin:12px 8px 0 0}button:hover{background:#30618f}button:disabled{opacity:.5;cursor:wait}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #293b52}th{color:#9eafc4}.scroll{overflow-x:auto}#message{min-height:28px;color:#a7d4ff}a{color:#8fc3ff}details{margin-top:22px}code{font-size:13px}footer{margin-top:32px;color:#9eafc4;font-size:13px}.status{font-size:13px}.positive{color:#8cddb6}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Qwen3.5-2B로 작은 AI의 성능과 효율을 개선하는 공개 실험실. 실제 비교 결과와 사용 방법을 한국어로 확인하세요.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://*.workers.dev; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'none'; object-src 'none'">
+<title>Qwen3.5-2B 공개 실험실 — 작은 AI를 개선하는 과정</title>
+<style>
+:root{color-scheme:dark;--bg:#0b111a;--panel:#131e2d;--line:#2a3c53;--text:#edf3fa;--muted:#acbdd0;--blue:#9dceff;--green:#a0e4c2;font:16px/1.75 "Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;background:var(--bg);color:var(--text)}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{max-width:1100px;margin:auto;padding:26px 24px 48px}a{color:var(--blue);text-underline-offset:4px}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:4px}nav{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:18px;font-size:14px}.nav-links{display:flex;gap:20px;flex-wrap:wrap}.brand{font-weight:700}header{padding:48px 0 24px}.eyebrow{color:var(--blue);font-size:14px;letter-spacing:.5px}h1{font-size:clamp(30px,5.5vw,52px);line-height:1.3;letter-spacing:-1.5px;margin:14px 0 20px;word-break:keep-all}h2{font-size:23px;line-height:1.45;letter-spacing:-.5px;margin:0 0 14px;word-break:keep-all}h3{font-size:18px;margin:0 0 9px}p{margin:0 0 14px;word-break:keep-all}.lead{max-width:780px;font-size:19px;color:#d0deed}.muted{color:var(--muted)}.small{font-size:14px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0 14px}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 18px;border:1px solid #3c597b;border-radius:8px;background:#23547f;color:#fff;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}.button:hover,button:hover{background:#306992}.secondary{background:transparent;color:var(--blue)}button:disabled{opacity:.5;cursor:wait}.note{border-left:3px solid #527d9f;padding:10px 15px;background:#101c2b;color:#bdcee0;font-size:14px}.section{margin-top:34px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:24px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.step{border-top:2px solid #49789e;padding:15px 0}.step-number{display:block;color:var(--blue);font-size:13px;font-weight:700;margin-bottom:5px}.number{font-size:30px;font-weight:700;line-height:1.4;margin:10px 0}.status-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}#message{font-size:14px;color:var(--blue)}.status-bar button{font-size:14px;min-height:38px;padding:6px 13px}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}th,td{text-align:left;vertical-align:top;padding:13px 10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}.pill{display:inline-block;border:1px solid #43566d;border-radius:20px;padding:3px 10px;font-size:13px;white-space:nowrap}.adopted{color:var(--green);border-color:#3d8063}.reason{max-width:290px;min-width:220px;margin-top:6px;color:var(--muted);font-size:13px}.guide-list{padding-left:23px;margin:15px 0}li{margin-bottom:8px}label{display:block;margin:14px 0 7px;font-weight:700}input,select{width:100%;padding:11px 13px;border:1px solid #48627e;border-radius:7px;background:#0b111a;color:inherit;font:inherit}input[readonly]{color:var(--muted);font-size:13px}summary{cursor:pointer;font-weight:700}details>div{margin-top:18px}details{margin-top:15px}.control-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.example-answer{font-size:21px;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:12px 0}.example-grid{margin-top:18px}.example-footer{display:flex;gap:16px;flex-wrap:wrap;padding-top:18px;margin-top:20px;border-top:1px solid var(--line)}.example-footer p{margin:0}.faq details{padding-top:14px;border-top:1px solid var(--line)}footer{border-top:1px solid var(--line);padding-top:24px;margin-top:38px;font-size:14px;color:var(--muted)}code{font-size:.9em;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0b111a;border-radius:8px;padding:16px;font-size:13px}.raw{font-size:13px}#example-details[hidden]{display:none}
+@media(max-width:760px){body{padding:20px 18px 36px}header{padding-top:34px}.grid,.two{grid-template-columns:1fr}.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:20px}.lead{font-size:17px}.number{font-size:28px}.actions .button{flex:1;min-width:170px}h1{letter-spacing:-1px}.example-answer{font-size:19px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head>
 <body>
-  <div class="tag">Persistent experimental research</div>
-  <h1>Qwen3.5-2B RSI</h1>
-  <p class="muted">A small model, controlled experiments, measured evidence. Local and Internet compute share durable research state.</p>
-  <div id="message" role="status" aria-live="polite">Connecting to coordinator…</div>
-  <div class="grid">
-    <section class="card"><h2>Validated system</h2><div class="number" id="version">—</div><div class="muted" id="model">Qwen3.5-2B · Q4_K_M</div></section>
-    <section class="card"><h2>Research state</h2><div class="number" id="state">—</div><div class="muted" id="progress">Durable checkpoints</div></section>
-    <section class="card"><h2>Daily cycles</h2><div class="number" id="budget">—</div><div class="muted">Four completed cycles maximum · bounded CPU inference</div></section>
-  </div>
-  <section class="card"><h2>Recorded experiments</h2><div class="scroll"><table><thead><tr><th>Cycle</th><th>State</th><th>Paired samples</th><th>Decision</th><th>Evidence</th></tr></thead><tbody id="jobs"></tbody></table></div><p class="muted">Scores are exploratory synthetic holdouts. Prompt/tool changes are system improvements. No model-weight or AGI achievement claimed.</p></section>
-  <details class="card"><summary>Authorized research controls</summary>
-    <label for="endpoint">Coordinator URL</label><input id="endpoint" type="url" autocomplete="off" placeholder="https://internet-rsi.example.workers.dev">
-    <label for="token">Coordinator token</label><input id="token" type="password" autocomplete="off" placeholder="Private token from local .env">
-    <p class="muted">Token stays in this page's memory. Never stored in browser storage or URL.</p>
-    <button id="refresh">Refresh state</button><button id="pause">Pause new work</button><button id="resume">Resume queued work</button><button id="clear">Clear token</button>
-    <p class="muted">Cloudflare maintains the queue. Scheduled GitHub Actions executes supported experiments when runner capacity is available. Local shutdown does not erase Internet state. Pause prevents new leases; running tasks may save progress.</p>
-  </details>
-  <section class="card" style="margin-top:20px"><h2>Compute requirements</h2><div id="resources" class="muted">Loading resource-gated tasks…</div></section>
-  <footer>Inference runs on Qwen3.5-2B compute clients. GitHub Pages serves this interface; Cloudflare coordinates persistent work. Unknown power and billing measurements stay unknown. <a href="https://github.com/juwonllee2024-dotcom/internet-rsi">Source and reproducible setup</a></footer>
-<script>
-  let endpoint = '', refreshing = false;
-  const el = id => document.getElementById(id);
-  async function api(path, body) {
-    const url = (el('endpoint').value || endpoint).replace(/\/$/, '');
-    if (!/^https:\/\/[-a-z0-9]+\.[-a-z0-9]+\.workers\.dev$/i.test(url)) throw Error('Use deployed HTTPS workers.dev coordinator URL.');
-    const headers = {'Content-Type':'application/json'};
-    if (body !== undefined) { if (!el('token').value) throw Error('Private token required for controls.'); headers.Authorization='Bearer '+el('token').value; }
-    const result = await fetch(url+path,{method:body === undefined ? 'GET' : 'POST',headers,body:body === undefined ? undefined : JSON.stringify(body)});
-    const data = await result.json(); if(!result.ok) throw Error(data.error || 'Coordinator unavailable'); return data;
-  }
-  async function refresh() {
-    if(refreshing)return; refreshing=true;
-    try {
-      const data=await api('/status');
-      el('version').textContent='v'+data.validated.version;
-      el('state').textContent=data.paused ? 'Paused' : (data.jobs[0]?.status || 'Ready');
-      el('progress').textContent=data.jobs[0] ? 'Cycle '+data.jobs[0].id+' · Internet state saved' : 'Waiting for next task';
-      el('budget').textContent=data.completed_today+' / '+data.daily_cycle_limit;
-      el('jobs').replaceChildren();
-      for(const job of data.jobs) {
-        const row=document.createElement('tr');
-        const decision=job.decision;
-        const score=decision?.baseline_score !== undefined ? Math.round(decision.baseline_score*100)+'% / '+Math.round(decision.candidate_score*100)+'%' : (decision && job.scores ? job.scores.baseline+'/8 / '+job.scores.candidate+'/8' : '—');
-        for(const text of [job.id,job.status,job.progress.baseline+' + '+job.progress.candidate,decision ? (decision.accepted?'Accepted · '+decision.kind:'Rejected') : 'Pending',score+(decision ? ' · '+decision.reason : '')]) { const cell=document.createElement('td'); cell.textContent=text; row.append(cell); }
-        el('jobs').append(row);
-      }
-      el('resources').textContent=data.resource_jobs.length ? data.resource_jobs.map(j=>j.kind+': '+j.status+' · '+j.reason).join('\n') : 'Model training requires separate compatible CUDA compute, a pinned dataset and paired adapter evaluation. No training job has been run.';
-      el('message').textContent='Coordinator online · Last checked '+new Date().toLocaleTimeString();
-    } catch(error) {el('message').textContent=error.message;}
-    finally {refreshing=false;}
-  }
-  el('refresh').onclick=refresh;
-  for(const [id,paused] of [['pause',true],['resume',false]]) el(id).onclick=async()=>{ try {await api('/pause',{paused});await refresh();}catch(error){el('message').textContent=error.message;} };
-  el('clear').onclick=()=>{el('token').value='';};
-  fetch('./config.json').then(r=>{if(!r.ok)throw Error('Deployment URL missing');return r.json();}).then(config=>{endpoint=config.coordinator;el('endpoint').value=endpoint;refresh();}).catch(e=>{el('message').textContent=e.message+'; set URL in controls.';});
-  setInterval(refresh,60000);
-</script>
-</body></html>
+<nav aria-label="주요 메뉴"><span class="brand">Qwen3.5-2B 공개 실험실</span><div class="nav-links"><a href="#start">사용 방법</a><a href="#results">실험 결과</a><a href="https://github.com/juwonllee2024-dotcom/internet-rsi" target="_blank" rel="noopener noreferrer">GitHub</a></div></nav>
+<header>
+<div class="eyebrow">작은 AI · 실제 비교 · 인터넷에 남는 연구 기록</div>
+<h1>작은 AI를 개선하는<br>과정을 공개합니다.</h1>
+<p class="lead">Qwen3.5-2B가 개선 아이디어를 내고, 기존 설정과 같은 문제를 풀어봅니다. <strong>결과가 좋아진 경우에만 새 설정을 채택하는 AI 연구 프로젝트</strong>입니다.</p>
+<p class="muted">내 컴퓨터가 꺼져도 기록은 인터넷에 남고, 예약된 실험은 GitHub 서버에서 이어집니다.</p>
+<div class="actions"><a class="button" href="#example">실제 AI 답변 살펴보기</a><a class="button secondary" href="#start">처음 사용하는 방법</a></div>
+<p class="note">누구나 결과를 볼 수 있습니다. 실험 실행·중지 권한은 소유자에게 있습니다. 현재 공개된 기능은 연구 실험과 결과 확인이며, 자유롭게 질문하는 채팅 기능은 아직 없습니다.</p>
+</header>
+<section class="section" aria-labelledby="flow-title"><h2 id="flow-title">이 작품은 이렇게 움직입니다</h2><div class="flow">
+<div class="step"><span class="step-number">01</span><h3>개선 아이디어</h3><p class="muted small">작은 AI가 바꿔볼 방법을 제안합니다.</p></div>
+<div class="step"><span class="step-number">02</span><h3>같은 문제로 비교</h3><p class="muted small">기존 설정과 새 설정을 각각 시험합니다.</p></div>
+<div class="step"><span class="step-number">03</span><h3>점수·속도 확인</h3><p class="muted small">정답뿐 아니라 오류와 답변 시간도 봅니다.</p></div>
+<div class="step"><span class="step-number">04</span><h3>좋은 변경만 보관</h3><p class="muted small">기준을 통과하지 못하면 원래 설정을 유지합니다.</p></div>
+</div><p class="muted small">이 반복 과정을 RSI(재귀적 자기개선)라고 부릅니다. 실험을 완료했다는 것과 성능이 좋아졌다는 것은 다릅니다.</p></section>
+<section class="section" aria-labelledby="status-title"><div class="status-bar"><h2 id="status-title">지금 연구 상황</h2><button id="refresh" type="button">최신 결과 새로고침</button></div><p id="message" role="status" aria-live="polite">실험 서버에 연결하고 있습니다.</p><div class="grid" style="margin-top:16px">
+<article class="card"><h3>현재 기준 버전</h3><div class="number" id="version">확인 중</div><p class="muted small">새 설정은 평가를 통과해야 다음 기준이 됩니다.</p><p class="small" id="adoptions">최근 채택 결과를 확인하고 있습니다.</p></article>
+<article class="card"><h3>다음 실험 상태</h3><div class="number" id="state">확인 중</div><p class="muted small" id="progress">저장된 작업을 불러오고 있습니다.</p></article>
+<article class="card"><h3>오늘 온라인 실험</h3><div class="number" id="budget">확인 중</div><p class="muted small">6시간 간격으로 예약 실행합니다. 하루 집계는 서버 날짜 기준입니다.</p></article>
+</div></section>
+<section id="example" class="card section" aria-labelledby="example-title"><div class="eyebrow">저장된 실제 실험 체험</div><h2 id="example-title">AI가 어떤 답을 냈는지 직접 살펴보세요</h2>
+<p class="muted">3번째 실험에서 나온 실제 기록입니다. 영문으로 실행한 문제를 한국어로 풀어 설명했습니다. 아래에서 고른다고 새 AI 추론이 실행되지는 않습니다.</p>
+<label for="example-task">살펴볼 문제</label><select id="example-task" disabled><option>실험 기록을 불러오는 중</option></select>
+<div id="example-details" hidden><p class="note" id="example-question" style="margin-top:18px"></p><div class="grid two example-grid">
+<article><h3>기존 설정의 답변</h3><div class="example-answer" id="example-baseline"></div><p class="muted small" id="example-baseline-result"></p></article>
+<article><h3>새 설정의 답변</h3><div class="example-answer" id="example-candidate"></div><p class="muted small" id="example-candidate-result"></p></article>
+</div><div class="example-footer"><p><strong>정답:</strong> <span id="example-correct"></span></p><p class="muted small">오답이나 미완성 답변은 성공으로 처리하지 않습니다.</p></div>
+<details class="raw"><summary>실제로 실행한 원문과 답변 보기</summary><p id="example-original" style="margin-top:12px"></p><pre id="example-raw"></pre><a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/artifacts/cycle-3.json" target="_blank" rel="noopener noreferrer">원본 실험 기록 확인</a></details></div>
+<p id="example-message" class="muted small" aria-live="polite"></p></section>
+<section id="start" class="section" aria-labelledby="start-title"><h2 id="start-title">처음 오셨다면 여기부터</h2><div class="grid two">
+<article class="card"><h3>방문자 · 로그인 없이 보기</h3><ol class="guide-list"><li>위에서 실제 AI 답변을 살펴보세요.</li><li>아래 결과에서 <strong>기존 설정 / 새 설정</strong> 점수를 비교하세요.</li><li><strong>채택</strong>은 평가 기준 통과, <strong>미채택</strong>은 원래 설정 유지라는 뜻입니다.</li></ol><a class="button secondary" href="#results">실험 결과로 이동</a><p class="muted small" style="margin-top:14px">예: 2/8은 8개 문제 중 2개 통과입니다. 새 설정이 기존에 풀던 문제를 하나라도 틀리면 채택하지 않습니다.</p></article>
+<article class="card"><h3>소유자 · 실험 한 번 실행</h3><ol class="guide-list"><li>아래 버튼으로 GitHub 실행 화면을 여세요.</li><li>저장소 소유자 또는 쓰기 권한이 있는 계정으로 로그인하세요.</li><li><strong>Run workflow</strong>(실험 시작)를 누르고 <strong>main</strong>을 선택해 실행하세요.</li></ol><a class="button" href="https://github.com/juwonllee2024-dotcom/internet-rsi/actions/workflows/rsi.yml" target="_blank" rel="noopener noreferrer">GitHub에서 실험 실행 열기</a><p class="muted small" style="margin-top:14px">실행 가능한 다음 실험을 한 번 수행합니다. 작업 중·일시 중지·하루 한도 도달 상태에서는 새 실험이 시작되지 않을 수 있습니다.</p></article>
+</div></section>
+<section id="results" class="card section" aria-labelledby="results-title"><h2 id="results-title">숨기지 않고 남긴 실험 결과</h2><p class="muted small">각 실험은 기존 설정 8개 + 새 설정 8개 문제를 평가합니다. 점수는 같은 실험 안에서 비교하세요. 다른 실험은 문제나 평가 버전이 다를 수 있습니다.</p>
+<div class="scroll" role="region" aria-label="실험 결과 표, 작은 화면에서는 가로로 스크롤할 수 있습니다" tabindex="0"><table><caption style="text-align:left;color:var(--muted);font-size:13px;padding:0 0 8px">최근 실험 기록 · 숫자는 통과한 문제 수 / 전체 문제 수</caption><thead><tr><th scope="col">실험</th><th scope="col">진행</th><th scope="col">기존 설정</th><th scope="col">새 설정</th><th scope="col">채택 여부와 이유</th></tr></thead><tbody id="jobs"><tr><td colspan="5">실험 기록을 불러오고 있습니다.</td></tr></tbody></table></div>
+<p class="muted small" style="margin-top:16px">현재 평가는 작은 합성 문제 모음입니다. 이 점수만으로 일반 지능이나 AGI 수준을 판단하지 않습니다.</p></section>
+<section class="card section faq" aria-labelledby="faq-title"><h2 id="faq-title">자주 궁금한 것</h2>
+<details><summary>이미 AI가 더 똑똑해졌다는 뜻인가요?</summary><div><p class="muted">실험 완료만으로 개선을 주장하지 않습니다. 문제 통과, 오류, 답변 시간과 채택 여부를 함께 확인해야 합니다. 프롬프트나 실행 설정 개선과 모델 자체의 학습도 구분합니다.</p></div></details>
+<details><summary>내 컴퓨터를 꺼도 계속되나요?</summary><div><p class="muted">온라인 기록은 Cloudflare에 남고, 예약된 실험은 GitHub 서버에서 실행됩니다. 페이지 자체가 AI를 실행하는 것은 아닙니다. 서버 가용량이나 서비스 한도에 따라 다음 실행이 늦어질 수 있습니다.</p></div></details>
+<details><summary>여기에 질문하거나 일을 맡길 수 있나요?</summary><div><p class="muted">현재는 정해진 연구 실험을 실행하고 결과를 확인하는 기능입니다. 자유로운 질문·작업 요청 창은 아직 없습니다. 공개 방문자는 기록을 볼 수 있고, 소유자는 GitHub에서 다음 실험을 실행할 수 있습니다.</p></div></details>
+<details><summary>모델 학습은 어디까지 됐나요?</summary><div><p id="resources" class="muted">학습 작업 상태를 확인하고 있습니다.</p><p class="muted small">모델 자체를 학습시키려면 호환 GPU와 별도 평가가 필요합니다. 학습 코드를 준비한 것만으로 성능이 향상됐다고 주장하지 않습니다.</p></div></details>
+<details><summary>내 컴퓨터에서 직접 실행하려면?</summary><div><p class="muted">연결 설정이 끝난 기존 프로젝트 폴더의 터미널에서 실행하세요.</p><pre>rtk proxy python -m rsi status
+rtk proxy python -m rsi run --cycles 1</pre><p class="muted small">새 컴퓨터에서는 모델과 비공개 연결 설정이 필요합니다. 상세 설정은 <a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/README.ko.md" target="_blank" rel="noopener noreferrer">한국어 사용 안내</a>를 확인하세요.</p></div></details>
+</section>
+<details class="card section"><summary>소유자 전용 · 자동 실험 중지 / 재개</summary><div><p class="muted">관리자 키를 가진 소유자만 조작할 수 있습니다. 재개는 대기열을 활성화하는 기능이며, 즉시 실행하려면 위의 GitHub 버튼을 사용하세요.</p>
+<label for="token">관리자 키</label><input id="token" type="password" autocomplete="off" placeholder="소유자의 비공개 관리자 키를 입력하세요"><p class="muted small">기존 컴퓨터의 프로젝트 폴더에서 <code>.env</code> 파일의 <code>RSI_TOKEN</code> 값입니다. 공개 GitHub 파일이나 댓글에 올리지 마세요. 입력한 키는 브라우저 저장소나 주소에 저장하지 않습니다.</p>
+<div class="control-actions"><button id="pause" type="button">새 실험 일시 중지</button><button id="resume" type="button">자동 실험 재개</button><button id="clear" class="secondary" type="button">입력한 키 지우기</button></div><p id="control-message" role="status" aria-live="polite" class="small" style="margin-top:14px"></p>
+<details><summary>자동 연결된 서버 주소 확인</summary><label for="endpoint">실험 서버 주소</label><input id="endpoint" type="url" readonly autocomplete="off" aria-describedby="endpoint-help"><p id="endpoint-help" class="muted small">배포 설정에서 자동으로 불러옵니다. 방문자는 수정할 필요가 없습니다.</p></details></div></details>
+<footer><p>Qwen3.5-2B 기반 공개 연구 프로젝트. 확인되지 않은 성능 향상, 학습 성공, AGI 달성은 주장하지 않습니다. 전력과 실제 청구 비용은 아직 측정되지 않았습니다.</p><a href="https://github.com/juwonllee2024-dotcom/internet-rsi" target="_blank" rel="noopener noreferrer">전체 코드</a> · <a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/README.ko.md" target="_blank" rel="noopener noreferrer">한국어 사용 안내</a> · <a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/artifacts/summary.json" target="_blank" rel="noopener noreferrer">측정 기록</a></footer>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
