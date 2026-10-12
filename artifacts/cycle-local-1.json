@@ -1,0 +1,451 @@
+{
+  "job": 1,
+  "baseline_version": 1,
+  "baseline_config": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "system_prompt": "Follow instructions carefully. Use available tools when needed.",
+    "think": false,
+    "num_ctx": 2048,
+    "num_predict": 192,
+    "num_thread": 4,
+    "temperature": 0,
+    "seed": 0
+  },
+  "candidate_config": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "system_prompt": "You are Qwen3.5-2B. Analyze inputs for reasoning, coding, or tool use. If a tool is needed, strictly output valid JSON with keys: 'tool', 'arguments', 'result'. Do not execute tools directly; only return the structured response. Ensure all tool calls follow this format exactly.",
+    "think": true,
+    "num_ctx": 2048,
+    "num_predict": 192,
+    "num_thread": 4,
+    "temperature": 0,
+    "seed": 0
+  },
+  "hypothesis": "Introduce a dedicated 'Tool-Invocation' step in the system prompt to explicitly enforce JSON schema validation and structured output before any tool call, ensuring reliable execution of coding and tooling tasks.",
+  "change_type": "system",
+  "identity": {
+    "model": "qwen3.5:2b-q4_K_M",
+    "digest": "1e2d21a4f03ab9e4a9c1976a4b7e88f21de61d65f2c5485d8fde8942be73f1e7",
+    "size_bytes": 1945781358,
+    "details": {
+      "parent_model": "model.gguf",
+      "format": "gguf",
+      "family": "qwen35",
+      "families": [
+        "qwen35"
+      ],
+      "parameter_size": "1.9B",
+      "quantization_level": "Q4_K_M"
+    },
+    "ollama": "0.33.3",
+    "platform": "Windows",
+    "threads": 4
+  },
+  "code_revision": "1f9765d78baf27832ddfdab2eaa78c1f3b44db2b",
+  "suite_version": "synthetic-v1",
+  "suite_seed": 33126828211785,
+  "suite_hash": "d6cc95647860eca26b5de2a94bfd66033a5fef0afd8d3df2b18cac472e8a323a",
+  "samples": {
+    "baseline": {
+      "arithmetic": {
+        "id": "arithmetic",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 4.75,
+        "eval_count": 9,
+        "prompt_eval_count": 130,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": \"140\"}",
+            "latency_s": 4.75,
+            "eval_count": 9,
+            "prompt_eval_count": 130,
+            "inference_duration_s": 4.7566472,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15297384448,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "word-problem": {
+        "id": "word-problem",
+        "category": "reasoning",
+        "passed": false,
+        "latency_s": 7.437999999994645,
+        "eval_count": 8,
+        "prompt_eval_count": 138,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 21}",
+            "latency_s": 7.437999999994645,
+            "eval_count": 8,
+            "prompt_eval_count": 138,
+            "inference_duration_s": 7.3712885,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15263670272,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "instruction": {
+        "id": "instruction",
+        "category": "instruction",
+        "passed": false,
+        "latency_s": 8.65700000000652,
+        "eval_count": 13,
+        "prompt_eval_count": 139,
+        "error": "KeyError: 'tool'",
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"color\": \"blue\", \"count\": 9}",
+            "latency_s": 8.65700000000652,
+            "eval_count": 13,
+            "prompt_eval_count": 139,
+            "inference_duration_s": 8.6343618,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15308238848,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "code": {
+        "id": "code",
+        "category": "coding",
+        "passed": true,
+        "latency_s": 11.546999999991385,
+        "eval_count": 23,
+        "prompt_eval_count": 146,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\n    \"answer\": \"def solve(x): return x * 9 + 4\"\n}",
+            "latency_s": 11.546999999991385,
+            "eval_count": 23,
+            "prompt_eval_count": 146,
+            "inference_duration_s": 11.4694071,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15280455680,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "plan": {
+        "id": "plan",
+        "category": "planning",
+        "passed": false,
+        "latency_s": 9.719000000011874,
+        "eval_count": 16,
+        "prompt_eval_count": 150,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": [\"release\", \"test\", \"prepare\", \"build\"]}",
+            "latency_s": 9.719000000011874,
+            "eval_count": 16,
+            "prompt_eval_count": 150,
+            "inference_duration_s": 9.676039,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15295053824,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "calculator": {
+        "id": "calculator",
+        "category": "tool",
+        "passed": false,
+        "latency_s": 6.969000000011874,
+        "eval_count": 9,
+        "prompt_eval_count": 136,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 211}",
+            "latency_s": 6.969000000011874,
+            "eval_count": 9,
+            "prompt_eval_count": 136,
+            "inference_duration_s": 6.9637697,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 14413426688,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "recall": {
+        "id": "recall",
+        "category": "memory",
+        "passed": false,
+        "latency_s": 6.51600000000326,
+        "eval_count": 8,
+        "prompt_eval_count": 133,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": \"N/A\"}",
+            "latency_s": 6.51600000000326,
+            "eval_count": 8,
+            "prompt_eval_count": 133,
+            "inference_duration_s": 6.4938359,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 14506024960,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "agent": {
+        "id": "agent",
+        "category": "agent",
+        "passed": false,
+        "latency_s": 7.35899999999674,
+        "eval_count": 8,
+        "prompt_eval_count": 144,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 34}",
+            "latency_s": 7.35899999999674,
+            "eval_count": 8,
+            "prompt_eval_count": 144,
+            "inference_duration_s": 7.3368488,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15087878144,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    },
+    "candidate": {
+      "arithmetic": {
+        "id": "arithmetic",
+        "category": "reasoning",
+        "passed": true,
+        "latency_s": 34.125,
+        "eval_count": 88,
+        "prompt_eval_count": 184,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 136}",
+            "latency_s": 34.125,
+            "eval_count": 88,
+            "prompt_eval_count": 184,
+            "inference_duration_s": 34.107475,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 14944350208,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "word-problem": {
+        "id": "word-problem",
+        "category": "reasoning",
+        "passed": true,
+        "latency_s": 33.90600000001723,
+        "eval_count": 114,
+        "prompt_eval_count": 192,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 221}",
+            "latency_s": 33.90600000001723,
+            "eval_count": 114,
+            "prompt_eval_count": 192,
+            "inference_duration_s": 33.8755818,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15232081920,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "instruction": {
+        "id": "instruction",
+        "category": "instruction",
+        "passed": true,
+        "latency_s": 25.203999999997905,
+        "eval_count": 73,
+        "prompt_eval_count": 193,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": {\"color\": \"blue\", \"count\": 9}}",
+            "latency_s": 25.203999999997905,
+            "eval_count": 73,
+            "prompt_eval_count": 193,
+            "inference_duration_s": 25.1740123,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15249215488,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "code": {
+        "id": "code",
+        "category": "coding",
+        "passed": true,
+        "latency_s": 32.719000000011874,
+        "eval_count": 109,
+        "prompt_eval_count": 200,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": \"def solve(x):\\n    return x * 9 + 4\"}",
+            "latency_s": 32.719000000011874,
+            "eval_count": 109,
+            "prompt_eval_count": 200,
+            "inference_duration_s": 32.695629,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15322300416,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "plan": {
+        "id": "plan",
+        "category": "planning",
+        "passed": false,
+        "latency_s": 45.812999999994645,
+        "eval_count": 0,
+        "prompt_eval_count": 0,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "outputs": [],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "calculator": {
+        "id": "calculator",
+        "category": "tool",
+        "passed": false,
+        "latency_s": 37.01600000000326,
+        "eval_count": 116,
+        "prompt_eval_count": 190,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 221}",
+            "latency_s": 37.01600000000326,
+            "eval_count": 116,
+            "prompt_eval_count": 190,
+            "inference_duration_s": 36.9596278,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 14460313600,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "recall": {
+        "id": "recall",
+        "category": "memory",
+        "passed": false,
+        "latency_s": 39.03200000000652,
+        "eval_count": 0,
+        "prompt_eval_count": 0,
+        "error": "RuntimeError: Inference output truncated; not valid evidence",
+        "tool_calls": [],
+        "outputs": [],
+        "cost_usd": null,
+        "energy_joules": null
+      },
+      "agent": {
+        "id": "agent",
+        "category": "agent",
+        "passed": false,
+        "latency_s": 31.969000000011874,
+        "eval_count": 115,
+        "prompt_eval_count": 198,
+        "error": null,
+        "tool_calls": [],
+        "outputs": [
+          {
+            "text": "{\"answer\": 34}",
+            "latency_s": 31.969000000011874,
+            "eval_count": 115,
+            "prompt_eval_count": 198,
+            "inference_duration_s": 31.9335148,
+            "model_allocated_bytes": 1596551329,
+            "available_memory_bytes": 15042387968,
+            "cost_usd": null,
+            "energy_joules": null
+          }
+        ],
+        "cost_usd": null,
+        "energy_joules": null
+      }
+    }
+  },
+  "proposal_metrics": {
+    "text": "{\n  \"hypothesis\": \"Introduce a dedicated 'Tool-Invocation' step in the system prompt to explicitly enforce JSON schema validation and structured output before any tool call, ensuring reliable execution of coding and tooling tasks.\",\n  \"system_prompt\": \"You are Qwen3.5-2B. Analyze inputs for reasoning, coding, or tool use. If a tool is needed, strictly output valid JSON with keys: 'tool', 'arguments', 'result'. Do not execute tools directly; only return the structured response. Ensure all tool calls follow this format exactly.\",\n  \"think\": true\n}",
+    "latency_s": 22.921999999991385,
+    "eval_count": 129,
+    "prompt_eval_count": 118,
+    "inference_duration_s": 22.8867354,
+    "model_allocated_bytes": 1596551329,
+    "available_memory_bytes": 15329583104,
+    "cost_usd": null,
+    "energy_joules": null
+  },
+  "decision": {
+    "accepted": false,
+    "kind": null,
+    "reason": "candidate execution failure"
+  },
+  "limitations": "Exploratory synthetic holdout, one seed, no frontier/AGI or model-weight improvement claim.",
+  "resource_metrics": {
+    "cost_usd": null,
+    "energy_joules": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "internet-rsi",
+  "main": "cloud/worker.js",
+  "compatibility_date": "2026-10-12",
+  "account_id": "272bb3ff31a408627ea4d1a074d7a837",
+  "workers_dev": true,
+  "vars": {"PUBLIC_ORIGIN": "https://juwonllee2024-dotcom.github.io"},
+  "durable_objects": {"bindings": [{"name": "COORDINATOR", "class_name": "Coordinator"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["Coordinator"]}],
+  "triggers": {"crons": ["*/15 * * * *"]}
+}

@@ -55,6 +55,17 @@ class StoreTests(unittest.TestCase):
         self.store.pause(False)
         self.assertIsNotNone(self.store.claim('one'))
 
+    def test_runtime_handoff_preserves_attempt_but_does_not_mix_timings(self):
+        job=self.store.claim('one')
+        payload=job['payload']
+        payload['identity']={'model':'qwen3.5:2b-q4_K_M','digest':'same','platform':'Windows'}
+        payload['samples']['baseline']['arithmetic']={'passed':True}
+        self.store.checkpoint(job['id'],job['token'],payload)
+        new=self.store.restart_attempt(job['id'],job['token'],{'model':'qwen3.5:2b-q4_K_M','digest':'same','platform':'Linux'})
+        self.assertEqual(new['samples'],{'baseline':{},'candidate':{}})
+        self.assertEqual(new['attempts'][0]['samples']['baseline']['arithmetic']['passed'],True)
+        self.assertEqual(new['identity']['platform'],'Linux')
+
 
 if __name__ == '__main__':
     unittest.main()

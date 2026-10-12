@@ -1,0 +1,49 @@
+name: Qwen3.5-2B RSI
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */6 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: rsi-compute
+  cancel-in-progress: false
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RSI_URL: ${{ vars.RSI_URL }}
+      RSI_TOKEN: ${{ secrets.RSI_TOKEN }}
+      OLLAMA_HOST: 127.0.0.1:11434
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Check coordinator configuration
+        run: |
+          test -n "$RSI_URL"
+          test -n "$RSI_TOKEN"
+      - name: Install bounded CPU runtime
+        run: |
+          curl --fail --location --retry 2 https://ollama.com/download/ollama-linux-amd64.tar.zst --output /tmp/ollama.tar.zst
+          sudo tar --zstd -xf /tmp/ollama.tar.zst -C /usr
+          ollama serve > /tmp/ollama.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:11434/api/version; then break; fi
+            sleep 2
+          done
+      - name: Obtain selected model
+        run: ollama pull qwen3.5:2b-q4_K_M > /tmp/model-pull.log 2>&1
+      - name: Run and checkpoint next eligible cycle
+        run: python -m rsi run --cycles 1 --owner github-actions
+      - name: Preserve interrupted local evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsi-evidence-${{ github.run_id }}
+          path: artifacts/private/
+          retention-days: 30
+          if-no-files-found: ignore

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://*.workers.dev; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; object-src 'none'">
+  <title>Qwen3.5-2B RSI research</title>
+  <style>
+    :root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0b111a;color:#e2e9f1}*{box-sizing:border-box}body{max-width:1080px;margin:auto;padding:44px 24px}h1{font-size:clamp(28px,5vw,44px);letter-spacing:-1px;margin:10px 0}h2{font-size:20px;margin-top:0}.tag{color:#8fc3ff;font-size:13px;text-transform:uppercase;letter-spacing:2px}.muted{color:#9eafc4}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:28px 0}.card{background:#131d2b;border:1px solid #293b52;border-radius:12px;padding:22px}.number{font-size:32px;font-weight:650}label{display:block;margin:12px 0 6px}input{width:100%;padding:11px;background:#0b111a;border:1px solid #3d526c;border-radius:6px;color:inherit}button{padding:11px 18px;border:1px solid #3d526c;border-radius:6px;background:#23496e;color:white;cursor:pointer;margin:12px 8px 0 0}button:hover{background:#30618f}button:disabled{opacity:.5;cursor:wait}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #293b52}th{color:#9eafc4}.scroll{overflow-x:auto}#message{min-height:28px;color:#a7d4ff}a{color:#8fc3ff}details{margin-top:22px}code{font-size:13px}footer{margin-top:32px;color:#9eafc4;font-size:13px}.status{font-size:13px}.positive{color:#8cddb6}
+  </style>
+</head>
+<body>
+  <div class="tag">Persistent experimental research</div>
+  <h1>Qwen3.5-2B RSI</h1>
+  <p class="muted">A small model, controlled experiments, measured evidence. Local and Internet compute share durable research state.</p>
+  <div id="message" role="status" aria-live="polite">Connecting to coordinator…</div>
+  <div class="grid">
+    <section class="card"><h2>Validated system</h2><div class="number" id="version">—</div><div class="muted" id="model">Qwen3.5-2B · Q4_K_M</div></section>
+    <section class="card"><h2>Research state</h2><div class="number" id="state">—</div><div class="muted" id="progress">Durable checkpoints</div></section>
+    <section class="card"><h2>Daily cycles</h2><div class="number" id="budget">—</div><div class="muted">Four completed cycles maximum · bounded CPU inference</div></section>
+  </div>
+  <section class="card"><h2>Recorded experiments</h2><div class="scroll"><table><thead><tr><th>Cycle</th><th>State</th><th>Paired samples</th><th>Decision</th><th>Evidence</th></tr></thead><tbody id="jobs"></tbody></table></div><p class="muted">Scores are exploratory synthetic holdouts. Prompt/tool changes are system improvements. No model-weight or AGI achievement claimed.</p></section>
+  <details class="card"><summary>Authorized research controls</summary>
+    <label for="endpoint">Coordinator URL</label><input id="endpoint" type="url" autocomplete="off" placeholder="https://internet-rsi.example.workers.dev">
+    <label for="token">Coordinator token</label><input id="token" type="password" autocomplete="off" placeholder="Private token from local .env">
+    <p class="muted">Token stays in this page's memory. Never stored in browser storage or URL.</p>
+    <button id="refresh">Refresh state</button><button id="pause">Pause new work</button><button id="resume">Resume queued work</button><button id="clear">Clear token</button>
+    <p class="muted">Cloudflare maintains the queue. Scheduled GitHub Actions executes supported experiments when runner capacity is available. Local shutdown does not erase Internet state. Pause prevents new leases; running tasks may save progress.</p>
+  </details>
+  <section class="card" style="margin-top:20px"><h2>Compute requirements</h2><div id="resources" class="muted">Loading resource-gated tasks…</div></section>
+  <footer>Inference runs on Qwen3.5-2B compute clients. GitHub Pages serves this interface; Cloudflare coordinates persistent work. Unknown power and billing measurements stay unknown. <a href="https://github.com/juwonllee2024-dotcom/internet-rsi">Source and reproducible setup</a></footer>
+<script>
+  let endpoint = '', refreshing = false;
+  const el = id => document.getElementById(id);
+  async function api(path, body) {
+    const url = (el('endpoint').value || endpoint).replace(/\/$/, '');
+    if (!/^https:\/\/[-a-z0-9]+\.[-a-z0-9]+\.workers\.dev$/i.test(url)) throw Error('Use deployed HTTPS workers.dev coordinator URL.');
+    const headers = {'Content-Type':'application/json'};
+    if (body !== undefined) { if (!el('token').value) throw Error('Private token required for controls.'); headers.Authorization='Bearer '+el('token').value; }
+    const result = await fetch(url+path,{method:body === undefined ? 'GET' : 'POST',headers,body:body === undefined ? undefined : JSON.stringify(body)});
+    const data = await result.json(); if(!result.ok) throw Error(data.error || 'Coordinator unavailable'); return data;
+  }
+  async function refresh() {
+    if(refreshing)return; refreshing=true;
+    try {
+      const data=await api('/status');
+      el('version').textContent='v'+data.validated.version;
+      el('state').textContent=data.paused ? 'Paused' : (data.jobs[0]?.status || 'Ready');
+      el('progress').textContent=data.jobs[0] ? 'Cycle '+data.jobs[0].id+' · Internet state saved' : 'Waiting for next task';
+      el('budget').textContent=data.completed_today+' / '+data.daily_cycle_limit;
+      el('jobs').replaceChildren();
+      for(const job of data.jobs) {
+        const row=document.createElement('tr');
+        const decision=job.decision;
+        const score=decision?.baseline_score !== undefined ? Math.round(decision.baseline_score*100)+'% / '+Math.round(decision.candidate_score*100)+'%' : '—';
+        for(const text of [job.id,job.status,job.progress.baseline+' + '+job.progress.candidate,decision ? (decision.accepted?'Accepted · '+decision.kind:'Rejected') : 'Pending',score+(decision ? ' · '+decision.reason : '')]) { const cell=document.createElement('td'); cell.textContent=text; row.append(cell); }
+        el('jobs').append(row);
+      }
+      el('resources').textContent=data.resource_jobs.length ? data.resource_jobs.map(j=>j.kind+': '+j.status+' · '+j.reason).join('\n') : 'Model training requires separate compatible CUDA compute, a pinned dataset and paired adapter evaluation. No training job has been run.';
+      el('message').textContent='Coordinator online · Last checked '+new Date().toLocaleTimeString();
+    } catch(error) {el('message').textContent=error.message;}
+    finally {refreshing=false;}
+  }
+  el('refresh').onclick=refresh;
+  for(const [id,paused] of [['pause',true],['resume',false]]) el(id).onclick=async()=>{ try {await api('/pause',{paused});await refresh();}catch(error){el('message').textContent=error.message;} };
+  el('clear').onclick=()=>{el('token').value='';};
+  fetch('./config.json').then(r=>{if(!r.ok)throw Error('Deployment URL missing');return r.json();}).then(config=>{endpoint=config.coordinator;el('endpoint').value=endpoint;refresh();}).catch(e=>{el('message').textContent=e.message+'; set URL in controls.';});
+  setInterval(refresh,60000);
+</script>
+</body></html>

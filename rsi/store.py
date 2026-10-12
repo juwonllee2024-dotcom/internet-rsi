@@ -82,6 +82,19 @@ class Store:
             db.execute('UPDATE jobs SET payload=?,expires=? WHERE id=?',
                        (json.dumps(payload, allow_nan=False), self.clock() + self.lease_seconds, job_id))
 
+    def restart_attempt(self, job_id, token, identity):
+        with self.transaction() as db:
+            row=self._check(db,job_id,token)
+            payload=json.loads(row['payload'])
+            if payload.get('identity',{}).get('digest') != identity.get('digest'):
+                raise ValueError('Model digest cannot change during handoff')
+            payload.setdefault('attempts',[]).append({'identity':payload['identity'],'samples':payload['samples']})
+            payload['identity']=identity
+            payload['samples']={'baseline':{},'candidate':{}}
+            db.execute('UPDATE jobs SET payload=?,expires=? WHERE id=?',
+                       (json.dumps(payload),self.clock()+self.lease_seconds,job_id))
+            return payload
+
     def finish(self, job_id, token, report):
         with self.transaction() as db:
             row = db.execute('SELECT * FROM jobs WHERE id=?', (job_id,)).fetchone()

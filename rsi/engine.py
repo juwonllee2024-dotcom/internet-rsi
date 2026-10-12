@@ -27,8 +27,8 @@ def run_cycle(store, runtime, owner='local-cpu', output_dir=None):
     payload = job['payload']
     identity = runtime.inspect()
     if payload.get('identity') and payload['identity'] != identity:
-        # Timing comparisons across different machines or model files are invalid.
-        raise RuntimeError('Checkpoint runtime differs; cannot mix evaluation hardware/model identity')
+        # Preserve partial evidence; remeasure the pair on the new compute client.
+        payload=store.restart_attempt(job['id'],job['token'],identity)
     payload['identity'] = identity
     baseline = payload['baseline']['config']
     pinned = payload['baseline'].get('identity', {}).get('digest')
@@ -47,6 +47,10 @@ def run_cycle(store, runtime, owner='local-cpu', output_dir=None):
         payload['proposal_metrics'] = response
         store.checkpoint(job['id'], job['token'], payload)
     suite = make_suite(payload['seed'])
+    revision = code_revision()
+    payload['code_revision'] = payload.get('code_revision', revision)
+    if payload['code_revision'] != revision:
+        raise RuntimeError('Code revision changed mid-cycle; use the recorded version to resume')
     for index, task in enumerate(suite):
         order = ('baseline', 'candidate') if index % 2 == 0 else ('candidate', 'baseline')
         for variant in order:
@@ -65,7 +69,7 @@ def run_cycle(store, runtime, owner='local-cpu', output_dir=None):
     report = {'job': job['id'], 'baseline_version': payload['baseline']['version'],
               'baseline_config': baseline, 'candidate_config': payload['candidate']['config'],
               'hypothesis': payload['candidate']['hypothesis'], 'change_type': 'system',
-              'identity': identity, 'code_revision': code_revision(), 'suite_version': 'synthetic-v1',
+              'identity': identity, 'code_revision': revision, 'suite_version': 'synthetic-v1',
               'suite_seed': payload['seed'], 'suite_hash': suite_hash(suite), 'samples': payload['samples'],
               'proposal_metrics': payload.get('proposal_metrics'), 'decision': decision,
               'limitations': 'Exploratory synthetic holdout, one seed, no frontier/AGI or model-weight improvement claim.',
