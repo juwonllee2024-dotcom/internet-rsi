@@ -1,0 +1,11 @@
+.env
+.dev.vars
+.state/
+.wrangler/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+artifacts/private/
+*.sqlite*
+*.log

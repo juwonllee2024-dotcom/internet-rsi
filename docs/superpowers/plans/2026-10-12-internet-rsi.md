@@ -1,0 +1,61 @@
+# Persistent RSI Implementation Plan
+
+> **For agentic workers:** Use superpowers:executing-plans inline. User requested autonomous build, run, test, measure, fix, verify, commit, continue.
+
+**Goal:** Execute and record a real Qwen3.5-2B paired experiment and continue through durable Internet coordination.
+
+**Architecture:** Python bounded inference/evaluation client, SQLite standalone state, Cloudflare Worker+D1 Internet authority, GitHub Actions CPU compute, GitHub Pages dashboard.
+
+**Tech Stack:** Python standard library, Ollama, JavaScript, Wrangler 4.149.0, D1 SQLite, GitHub Actions/Pages.
+
+**Spec:** docs/superpowers/specs/2026-10-12-internet-rsi-design.md
+
+## Global Constraints
+- Qwen3.5-2B only. Preserve validated baseline. No arbitrary shell/code execution.
+- One inference at a time, four CPU threads, 2048 context, bounded tokens.
+- Missing measurements are null; no fabricated success, billing or training.
+- Holdout separation, complete paired evidence and no regression are mandatory.
+- Internet state is authoritative when configured; credentials never public.
+
+## Review Focus
+- Stale lease after restart must reject checkpoint and promotion.
+- Partial/duplicate results must not replace stable configuration or lose next task.
+- Failed network upload must preserve local evidence and report failure.
+- Malicious model output must not access files, network, imports or the host shell.
+- Incomplete/invalid metric evidence must reject promotion.
+
+### Task 1: Local runtime and safe evaluation
+Files: `rsi/runtime.py`, `rsi/evaluation.py`, `rsi/gate.py`, `tests/test_evaluation.py`, `tests/test_gate.py`.
+Interfaces: `OllamaRuntime.generate(messages, config) -> dict`; `make_suite(seed) -> list[dict]`; `evaluate_task(runtime, config, task) -> dict`; `compare(baseline, candidate) -> dict`.
+- [ ] Write failing tests for arithmetic/code isolation, repeatable seeded tasks, strict paired gate, regression and incomplete metrics.
+- [ ] Run `rtk proxy python -m unittest discover -s tests -v`, verify RED.
+- [ ] Implement restricted tools/AST and actual Ollama metrics; verify GREEN and selected-model smoke inference.
+- [ ] Commit local evaluation slice.
+
+### Task 2: Persistent resumable RSI
+Files: `rsi/store.py`, `rsi/engine.py`, `rsi/__main__.py`, `tests/test_store.py`, `tests/test_engine.py`.
+Interfaces: store `claim(owner)`, `checkpoint(job, token, payload)`, `finish(job, token, report)`; `run_cycle(store, runtime, owner)`.
+- [ ] Write RED tests for lease expiration/fencing, checkpoint restart, duplicate finish, stable-version retention and completed paired cycles.
+- [ ] Implement SQLite authority, deterministic job seeds, narrow Qwen hypothesis schema, checkpoint every sample, safe comparison, next queued cycle.
+- [ ] Verify GREEN, run real local paired experiment, save evidence and queue next.
+- [ ] Commit persistent core.
+
+### Task 3: Internet coordination
+Files: `cloud/worker.js`, `cloud/schema.sql`, `wrangler.jsonc`, `package.json`, `tests/cloud.test.mjs`, `rsi/remote.py`.
+- [ ] RED tests for authenticated control, D1 leases and invalid/duplicate completion on a real local Worker.
+- [ ] Implement Worker D1 state, cron recovery, authenticated claim/checkpoint/completion/status/pause; use lease fencing and recompute promotion at coordinator.
+- [ ] Test real Wrangler/D1 integration and remote Python cycle.
+- [ ] Deploy D1/Worker through existing authentication; keep secrets private. Commit.
+
+### Task 4: GitHub, Pages and independent compute
+Files: `.github/workflows/check.yml`, `.github/workflows/rsi.yml`, `.github/workflows/pages.yml`, `web/index.html`, `scripts/deploy.py`, README and research evidence.
+- [ ] Build authenticated status/control interface with session-only token storage.
+- [ ] Create requested GitHub project, push verified source, enable Pages and configure coordinator secrets.
+- [ ] Run bounded hosted CPU inference workflow with chosen quantized model; record results in D1. Verify public page and next job.
+- [ ] Verify recovery and full suite, update evidence and commit.
+
+### Task 5: Resource-gated model experiments and research continuation
+Files: `training/lora.py`, `training/README.md`, `docs/research-status.md`.
+- [ ] Test resource admission and base-model constraints before optional trainer implementation.
+- [ ] Preserve blocked training job with explicit CUDA/memory/dataset requirements. No unverified adapter promotion.
+- [ ] Fresh review of whole change, repair important findings, verify suite and deployment, commit final evidence.
