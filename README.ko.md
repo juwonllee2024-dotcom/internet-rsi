@@ -78,3 +78,5 @@ rtk proxy python scripts/build_examples.py
 ```
 
 자세한 구현과 측정 한계는 [영문 README](README.md), [연구 상태](docs/research-status.md), [실험 측정 기록](artifacts/summary.json)을 참고하세요.
+
+내 컴퓨터를 꺼도 무료 서버에서 연구를 이어가는 준비 과정은 [무료 서버 운영 안내](docs/free-server.ko.md)에 정리했습니다. 서버 확보와 실제 24시간 실행 검증은 아직 수행하지 않았습니다.
