@@ -1,5 +1,6 @@
 """Internet authority client; failed writes raise and preserve local evidence."""
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -15,6 +16,7 @@ class RemoteStore:
             raise ValueError('Coordinator token missing or too short')
         self.url, self.token = url.rstrip('/'), token
         self.session=uuid.uuid4().hex
+        self.study_id=os.environ.get('RSI_STUDY_ID')
         self.outbox=Path(outbox)
 
     def request(self, path, payload=None):
@@ -34,7 +36,10 @@ class RemoteStore:
                     raise RuntimeError('Coordinator unavailable; evidence remains local') from None
             time.sleep(2**attempt)
 
-    def claim(self,owner): return self.request('/claim',{'owner':owner,'session':self.session})
+    def claim(self,owner):
+        payload={'owner':owner,'session':self.session}
+        if self.study_id:payload['study_id']=self.study_id
+        return self.request('/claim',payload)
     def checkpoint(self,job_id,token,payload):
         packet={'id':job_id,'token':token,'payload':payload}
         self.outbox.mkdir(parents=True,exist_ok=True)

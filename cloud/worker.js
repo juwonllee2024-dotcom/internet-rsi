@@ -3,6 +3,7 @@ export const BASE_CONFIG = {model: 'qwen3.5:2b-q4_K_M', system_prompt: 'Follow i
 const TASKS = ['arithmetic', 'word-problem', 'instruction', 'code', 'plan', 'calculator', 'recall', 'agent'];
 const CATEGORIES = {arithmetic:'reasoning','word-problem':'reasoning',instruction:'instruction',code:'coding',plan:'planning',calculator:'tool',recall:'memory',agent:'agent'};
 const LEASE_MS = 1200000;
+const STUDY_DAILY_LIMIT = 48;
 const median = a => { const b = [...a].sort((x,y) => x-y); const m = Math.floor(b.length/2); return b.length%2 ? b[m] : (b[m-1]+b[m])/2; };
 
 export function validateConfig(config) {
@@ -34,6 +35,10 @@ export function compare(baseline, candidate, expected = TASKS) {
 
 const response = (data,status=200) => Response.json(data,{status});
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+
+export function studyStatus(study, now = Date.now()) {
+  return study ? {...study,active:now >= study.started_at && now < study.ends_at && study.completed < study.max_cycles} : null;
+}
 
 export function validateEvidence(report) {
   if(same(report.baseline_config,report.candidate_config))return 'no controlled configuration change';
@@ -86,6 +91,16 @@ export class Coordinator {
   check(job, token) {
     if (!job || job.status !== 'running' || job.token !== token || job.expires <= Date.now()) throw Error('Stale or expired lease');
   }
+  async recordCompletion(tx, meta, job) {
+    const today=new Date().toISOString().slice(0,10);
+    meta.completed_count=meta.completed_day===today ? meta.completed_count+1 : 1;
+    meta.completed_day=today;
+    if(job.study_id) {
+      const study=meta.study?.id===job.study_id ? meta.study : await tx.get('study:'+job.study_id);
+      if(study) { study.completed++; await tx.put('study:'+study.id,study); }
+      job.report.research_study_id=job.study_id;
+    }
+  }
   async fetch(request) {
     const path = new URL(request.url).pathname;
     try {
@@ -100,14 +115,15 @@ export class Coordinator {
           const jobs=[];
           for (let id=meta.cycle;id>Math.max(0,meta.cycle-20);id--) {
             const job=await tx.get('job:'+id);
-            if(job) jobs.push({id,status:job.status,expires:job.expires,decision:job.report?.decision || null,
+            if(job) jobs.push({id,status:job.status,expires:job.expires,study_id:job.study_id || null,decision:job.report?.decision || null,
               baseline_version:job.payload.baseline.version,completed_at:job.completed_at || null,
               scores:{baseline:Object.values(job.report?.samples?.baseline || {}).filter(x=>x.passed).length,candidate:Object.values(job.report?.samples?.candidate || {}).filter(x=>x.passed).length},
               progress:{baseline:Object.keys(job.report?.samples?.baseline || job.payload.samples.baseline).length,candidate:Object.keys(job.report?.samples?.candidate || job.payload.samples.candidate).length}});
           }
-          return response({model:BASE_CONFIG.model,validated:meta.validated,paused:meta.paused,jobs,
+          const study=studyStatus(meta.study);
+          return response({model:BASE_CONFIG.model,validated:meta.validated,paused:meta.paused,jobs,study,
             completed_today:meta.completed_day === new Date().toISOString().slice(0,10) ? meta.completed_count : 0,
-            daily_cycle_limit:4,resource_jobs:meta.resource_jobs,compute:'Bounded GitHub Actions CPU jobs and compatible local clients; no LLM inference in Worker.'});
+            daily_cycle_limit:study?.active ? STUDY_DAILY_LIMIT : 4,resource_jobs:meta.resource_jobs,compute:'Bounded GitHub Actions CPU jobs and compatible local clients; no LLM inference in Worker.'});
         });
       }
       const raw = await request.text();
@@ -117,6 +133,20 @@ export class Coordinator {
         const meta = await this.ensure(tx);
         if (path === '/tick') return response({active:meta.active});
         if (path === '/pause') { meta.paused=Boolean(data.paused); await tx.put('meta',meta); return response({paused:meta.paused}); }
+        if (path === '/study') {
+          if(data.action==='stop' && Object.keys(data).length===1) {
+            if(meta.study) { meta.study.ends_at=Date.now(); await tx.put('study:'+meta.study.id,meta.study); await tx.put('meta',meta); }
+            return response(studyStatus(meta.study));
+          }
+          if(Object.keys(data).sort().join()!=='hours,max_cycles' || !Number.isInteger(data.hours) || data.hours<1 || data.hours>24
+            || !Number.isInteger(data.max_cycles) || data.max_cycles<1 || data.max_cycles>48) throw Error('Study must be 1..24 hours and 1..48 cycles');
+          if(meta.paused) throw Error('Resume experiments before starting a study');
+          if(studyStatus(meta.study)?.active) throw Error('Study already active; deadline cannot be extended');
+          const started_at=Date.now();
+          meta.study={id:crypto.randomUUID(),started_at,ends_at:started_at+data.hours*3600000,max_cycles:data.max_cycles,started:0,completed:0,interval_minutes:30};
+          await tx.put('study:'+meta.study.id,meta.study); await tx.put('meta',meta);
+          return response(studyStatus(meta.study));
+        }
         if (path === '/resource-job') {
           if (meta.resource_jobs.length >= 30) throw Error('Resource queue full');
           if (data.kind !== 'lora' || !/^[a-f0-9]{40}$/.test(data.model_revision || '') || !/^[a-f0-9]{64}$/.test(data.dataset_sha256 || '')) throw Error('Pinned model revision and dataset hash required');
@@ -128,11 +158,19 @@ export class Coordinator {
         const job = await tx.get('job:'+meta.active);
         if (path === '/claim') {
           const today=new Date().toISOString().slice(0,10);
-          if (meta.paused || (meta.completed_day === today && meta.completed_count >= 4)) return response(null);
+          const study=studyStatus(meta.study);
+          if(data.study_id!==undefined && (!study?.active || data.study_id!==study.id))return response(null);
           if (typeof data.owner !== 'string' || data.owner.length > 80 || data.owner.length < 1) throw Error('Invalid owner');
           if (!/^[a-f0-9]{32}$/.test(data.session || ''))throw Error('Distinct client session required');
           if (job.status === 'running' && job.expires > Date.now() && (job.owner !== data.owner || job.session !== data.session)) return response(null);
           const resume = job.status === 'running' && job.expires > Date.now() && job.owner === data.owner && job.session === data.session;
+          const limit=study?.active ? STUDY_DAILY_LIMIT : 4;
+          if(meta.paused || (!resume && meta.completed_day===today && meta.completed_count>=limit)) return response(null);
+          if(study?.active && job.study_id!==study.id) {
+            if(study.started>=study.max_cycles)return response(null);
+            job.study_id=study.id; meta.study.started++;
+            await tx.put('study:'+study.id,meta.study); await tx.put('meta',meta);
+          }
           job.token = resume ? job.token : crypto.randomUUID(); job.owner=data.owner; job.session=data.session; job.status='running'; job.expires=Date.now()+LEASE_MS;
           await tx.put('job:'+job.id,job);
           return response({id:job.id,token:job.token,expires:job.expires/1000,payload:job.payload});
@@ -161,7 +199,7 @@ export class Coordinator {
           requested.report={failure:String(data.failure).slice(0,300),samples:requested.payload.samples,
             decision:{accepted:false,kind:null,reason:'failed experiment: '+String(data.failure).slice(0,160)}};
           meta.observations={proposal_failure:String(data.failure).slice(0,160)};
-          const today=new Date().toISOString().slice(0,10);meta.completed_count=meta.completed_day===today ? meta.completed_count+1 : 1;meta.completed_day=today;
+          await this.recordCompletion(tx,meta,requested);
           await tx.put('job:'+requested.id,requested);await tx.put('meta',meta);await this.ensure(tx);return response(requested.report);
         }
         if(path === '/restart-attempt') {
@@ -212,7 +250,7 @@ export class Coordinator {
           const failed={}; for(const sample of Object.values(report.samples.baseline)) if(!sample.passed) failed[sample.category]=(failed[sample.category] || 0)+1;
           meta.observations={failure_categories:failed,last_decision:decision.reason};
           requested.payload.samples={baseline:{},candidate:{}}; // one durable copy of full completed evidence
-          const today=new Date().toISOString().slice(0,10); meta.completed_count=meta.completed_day===today ? meta.completed_count+1 : 1; meta.completed_day=today;
+          await this.recordCompletion(tx,meta,requested);
           await tx.put('job:'+requested.id,requested); await tx.put('meta',meta); await this.ensure(tx);
           return response(decision);
         }
@@ -233,7 +271,7 @@ export default {
     if(url.pathname === '/health') return new Response(JSON.stringify({ok:true,model:BASE_CONFIG.model}),{headers:{...headers,'Content-Type':'application/json'}});
     const publicRead=request.method === 'GET' && url.pathname === '/status';
     if (!publicRead && !tokenEqual(request.headers.get('Authorization')?.replace(/^Bearer /,''),env.RSI_TOKEN)) return new Response(JSON.stringify({error:'Unauthorized'}),{status:401,headers});
-    if (!['/status','/claim','/checkpoint','/finish','/pause','/export','/resource-job','/tick','/import-local','/restart-attempt','/fail'].includes(url.pathname)) return new Response('Not found',{status:404,headers});
+    if (!['/status','/claim','/checkpoint','/finish','/pause','/study','/export','/resource-job','/tick','/import-local','/restart-attempt','/fail'].includes(url.pathname)) return new Response('Not found',{status:404,headers});
     const stub=env.COORDINATOR.get(env.COORDINATOR.idFromName('research'));
     const result=await stub.fetch(request);
     const outgoing=new Response(result.body,result); for(const [key,value] of Object.entries(headers)) outgoing.headers.set(key,value);

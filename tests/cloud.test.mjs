@@ -5,6 +5,81 @@ let api;
 try { api = await import('../cloud/worker.js'); } catch { api = null; }
 const sample = (id, passed, latency_s = 2) => ({ id, category: 'reasoning', passed, latency_s, eval_count: 10, error: null });
 
+test('study ends at its deadline and cannot carry unused quota beyond 24 hours', () => {
+  const study={started_at:0,ends_at:1000,started:1,completed:0,max_cycles:2};
+  assert.equal(api.studyStatus(study,999).active,true);
+  assert.equal(api.studyStatus(study,1000).active,false);
+  assert.equal(api.studyStatus({...study,completed:2},500).active,false);
+  assert.equal(api.studyStatus(null,500),null);
+});
+
+test('study-bound claim cannot start baseline work after stop or a different study', async () => {
+  const token='infrastructure-test-token-123456789';
+  const mf=new Miniflare(convertV4MiniflareOptions({name:'study-scope-test',modules:true,scriptPath:'cloud/worker.js',compatibilityDate:'2026-10-12',
+    durableObjects:{COORDINATOR:{className:'Coordinator',useSQLite:true}},bindings:{RSI_TOKEN:token,PUBLIC_ORIGIN:'https://example.test'}}));
+  try {
+    const call=async(path,body)=>(await mf.dispatchFetch('https://test'+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(body)})).json();
+    const study=await call('/study',{hours:1,max_cycles:2});
+    const claim={owner:'study-test',session:'a'.repeat(32),study_id:study.id};
+    assert.equal(await call('/claim',{...claim,study_id:'00000000-0000-0000-0000-000000000000'}),null);
+    await call('/study',{action:'stop'});
+    assert.equal(await call('/claim',claim),null);
+    const replacement=await call('/study',{hours:1,max_cycles:2});
+    assert.equal(await call('/claim',claim),null);
+    const current=await call('/claim',{...claim,study_id:replacement.id});
+    assert.ok(current.id);
+  } finally { await mf.dispose(); }
+});
+
+test('temporary study respects auth, fixed bounds, pause, unique reservations and failure accounting', async () => {
+  const token='infrastructure-test-token-123456789';
+  const mf=new Miniflare(convertV4MiniflareOptions({name:'study-test',modules:true,scriptPath:'cloud/worker.js',compatibilityDate:'2026-10-12',
+    durableObjects:{COORDINATOR:{className:'Coordinator',useSQLite:true}},
+    bindings:{RSI_TOKEN:token,PUBLIC_ORIGIN:'https://example.test'}}));
+  try {
+    const call=async(path,body,authorized=true)=>{
+      const headers={'Content-Type':'application/json'};
+      if(authorized)headers.Authorization='Bearer '+token;
+      return mf.dispatchFetch('https://test'+path,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body)});
+    };
+    assert.equal((await call('/study',{hours:24,max_cycles:2},false)).status,401);
+    for(const body of [{hours:25,max_cycles:2},{hours:24,max_cycles:49},{hours:0,max_cycles:2},{hours:24,max_cycles:0},{hours:24,max_cycles:2,extra:true}])
+      assert.equal((await call('/study',body)).status,409);
+    await call('/pause',{paused:true});
+    assert.equal((await call('/study',{hours:24,max_cycles:2})).status,409);
+    await call('/pause',{paused:false});
+    const initial=await (await call('/study',{hours:24,max_cycles:2})).json();
+    assert.equal(initial.active,true);
+    assert.equal(initial.ends_at-initial.started_at,86400000);
+    assert.equal((await call('/study',{hours:24,max_cycles:2})).status,409);
+    const claim=()=>call('/claim',{owner:'study-test',session:'a'.repeat(32)});
+    for(let i=0;i<2;i++) {
+      const job=await (await claim()).json();
+      const resumed=await (await claim()).json();
+      assert.equal(resumed.id,job.id);
+      const running=await (await call('/status')).json();
+      assert.equal(running.study.started,i+1);
+      assert.equal((await call('/fail',{id:job.id,token:job.token,failure:'controlled temporary test'})).status,200);
+      assert.equal((await call('/fail',{id:job.id,token:job.token,failure:'repeat'})).status,409);
+    }
+    const done=await (await call('/status')).json();
+    assert.equal(done.study.completed,2);
+    assert.equal(done.study.active,false);
+    assert.equal(done.daily_cycle_limit,4);
+    assert.equal((await call('/study',{action:'stop'})).status,200);
+    const second=await (await call('/study',{hours:1,max_cycles:48})).json();
+    assert.notEqual(second.id,initial.id);
+    for(let i=2;i<48;i++) {
+      const job=await (await claim()).json();
+      assert.ok(job);
+      await call('/fail',{id:job.id,token:job.token,failure:'controlled temporary test'});
+    }
+    assert.equal(await (await claim()).json(),null);
+    await call('/study',{action:'stop'});
+    assert.equal((await (await call('/status')).json()).study.active,false);
+  } finally { await mf.dispose(); }
+});
+
 test('coordinator recomputes promotion rather than trusts client claim', () => {
   assert.ok(api, 'cloud coordinator not implemented');
   assert.equal(api.compare([sample('a', true)], [sample('a', false)], ['a']).accepted, false);

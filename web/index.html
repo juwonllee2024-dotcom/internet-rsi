@@ -29,7 +29,7 @@
 <section class="section" aria-labelledby="status-title"><div class="status-bar"><h2 id="status-title">지금 연구 상황</h2><button id="refresh" type="button">최신 결과 새로고침</button></div><p id="message" role="status" aria-live="polite">실험 서버에 연결하고 있습니다.</p><div class="grid" style="margin-top:16px">
 <article class="card"><h3>현재 기준 버전</h3><div class="number" id="version">확인 중</div><p class="muted small">새 설정은 평가를 통과해야 다음 기준이 됩니다.</p><p class="small" id="adoptions">최근 채택 결과를 확인하고 있습니다.</p></article>
 <article class="card"><h3>다음 실험 상태</h3><div class="number" id="state">확인 중</div><p class="muted small" id="progress">저장된 작업을 불러오고 있습니다.</p></article>
-<article class="card"><h3>오늘 온라인 실험</h3><div class="number" id="budget">확인 중</div><p class="muted small">6시간 간격으로 예약 실행합니다. 하루 집계는 서버 날짜 기준입니다.</p></article>
+<article class="card"><h3 id="budget-title">오늘 온라인 실험</h3><div class="number" id="budget">확인 중</div><p class="muted small" id="budget-help">기본은 6시간 간격입니다. 소유자가 24시간 연구를 시작하면 30분 간격으로 실험합니다.</p></article>
 </div></section>
 <section id="example" class="card section" aria-labelledby="example-title"><div class="eyebrow">저장된 실제 실험 체험</div><h2 id="example-title">AI가 어떤 답을 냈는지 직접 살펴보세요</h2>
 <p class="muted">3번째 실험에서 나온 실제 기록입니다. 영문으로 실행한 문제를 한국어로 풀어 설명했습니다. 아래에서 고른다고 새 AI 추론이 실행되지는 않습니다.</p>
@@ -58,6 +58,8 @@ rtk proxy python -m rsi run --cycles 1</pre><p class="muted small">새 컴퓨터
 <details class="card section"><summary>소유자 전용 · 자동 실험 중지 / 재개</summary><div><p class="muted">관리자 키를 가진 소유자만 조작할 수 있습니다. 재개는 대기열을 활성화하는 기능이며, 즉시 실행하려면 위의 GitHub 버튼을 사용하세요.</p>
 <label for="token">관리자 키</label><input id="token" type="password" autocomplete="off" placeholder="소유자의 비공개 관리자 키를 입력하세요"><p class="muted small">기존 컴퓨터의 프로젝트 폴더에서 <code>.env</code> 파일의 <code>RSI_TOKEN</code> 값입니다. 공개 GitHub 파일이나 댓글에 올리지 마세요. 입력한 키는 브라우저 저장소나 주소에 저장하지 않습니다.</p>
 <div class="control-actions"><button id="pause" type="button">새 실험 일시 중지</button><button id="resume" type="button">자동 실험 재개</button><button id="clear" class="secondary" type="button">입력한 키 지우기</button></div><p id="control-message" role="status" aria-live="polite" class="small" style="margin-top:14px"></p>
+<h3 style="margin-top:24px">카드 없이 24시간 연구하기</h3><p class="muted small">공개 GitHub 저장소의 무료 표준 실행기로 30분마다 실제 평가를 시도합니다. 최대 48회이며, 24시간 후 또는 한도 도달 시 기본 예약으로 돌아갑니다. 실험 사이에는 대기 시간이 있고, GitHub 상황에 따라 예약이 늦어지거나 누락될 수 있습니다.</p>
+<div class="control-actions"><button id="study-start" type="button">24시간 연구 시작</button><button id="study-stop" class="secondary" type="button">24시간 연구 종료</button></div><p class="muted small" style="margin-top:12px">시작 후 다음 예약부터 실행합니다. 첫 실험을 바로 시작하려면 위의 GitHub 실행 버튼을 사용하세요. 연구 종료는 추가 예약을 끄며, 진행 중인 실험은 완료될 수 있습니다.</p>
 <details><summary>자동 연결된 서버 주소 확인</summary><label for="endpoint">실험 서버 주소</label><input id="endpoint" type="url" readonly autocomplete="off" aria-describedby="endpoint-help"><p id="endpoint-help" class="muted small">배포 설정에서 자동으로 불러옵니다. 방문자는 수정할 필요가 없습니다.</p></details></div></details>
 <footer><p>Qwen3.5-2B 기반 공개 연구 프로젝트. 확인되지 않은 성능 향상, 학습 성공, AGI 달성은 주장하지 않습니다. 전력과 실제 청구 비용은 아직 측정되지 않았습니다.</p><a href="https://github.com/juwonllee2024-dotcom/internet-rsi" target="_blank" rel="noopener noreferrer">전체 코드</a> · <a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/README.ko.md" target="_blank" rel="noopener noreferrer">한국어 사용 안내</a> · <a href="https://github.com/juwonllee2024-dotcom/internet-rsi/blob/main/artifacts/summary.json" target="_blank" rel="noopener noreferrer">측정 기록</a></footer>
 <script type="module" src="./app.js"></script>

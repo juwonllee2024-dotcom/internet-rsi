@@ -39,7 +39,7 @@ rtk proxy python -m rsi pause
 rtk proxy python -m rsi resume
 ```
 
-`run --continuous` starts a user-invoked loop; it does not install a startup service or change operating-system settings. Default runs end after one cycle. Four completed Internet cycles/day and a 30-minute Actions job timeout limit ongoing compute. Local inference defers below 5 GiB available RAM. This is a headroom guard, not a universal hardware compatibility promise.
+`run --continuous` starts a user-invoked loop; it does not install a startup service or change operating-system settings. Default runs end after one cycle. The default Internet budget is four completed cycles/day; Actions jobs time out after 30 minutes. An authenticated temporary study permits up to 48 newly reserved experiments over at most 24 hours, with a hard 48 completions/UTC-day budget and 30-minute scheduled attempts. Deadlines cannot be extended while a study is active; expiration or completion returns to the default budget. Extra schedule events preflight the coordinator before installing inference, and the job refuses non-public repositories. Scheduled execution can be delayed or dropped. This is bounded development/evaluation, with waiting between experiments. Use `rtk proxy python scripts/study.py start|status|stop` or the authenticated page controls. Local inference defers below 5 GiB available RAM. This is a headroom guard, not a universal hardware compatibility promise.
 
 ## Reproducible verification
 

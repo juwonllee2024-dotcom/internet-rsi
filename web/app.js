@@ -36,7 +36,12 @@ async function api(path, body) {
   });
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) throw new Error('소유자 인증키 또는 접근 권한을 확인해 주세요.');
-    if (response.status === 409) throw new Error('작업 상태가 바뀌었습니다. 새로고침 후 다시 시도해 주세요.');
+    if (response.status === 409) {
+      const reason = await response.json().catch(() => ({}));
+      if (reason.error === 'Study already active; deadline cannot be extended') throw new Error('이미 24시간 연구가 진행 중입니다. 현재 종료 시간은 유지됩니다.');
+      if (reason.error === 'Resume experiments before starting a study') throw new Error('현재 일시 중지 상태입니다. 자동 실험 재개 후 연구를 시작해 주세요.');
+      throw new Error('요청을 현재 작업 상태에 적용할 수 없습니다. 새로고침 후 확인해 주세요.');
+    }
     throw new Error(`실험 서버가 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요. (오류 ${response.status})`);
   }
   return response.json();
@@ -58,7 +63,15 @@ function renderStatus(data) {
   el('adoptions').textContent = `표시된 최근 기록에서 ${adopted}회 채택`;
   el('state').textContent = data.paused ? '일시 중지' : active ? (states[active.status] || '상태 확인 중') : '다음 기록 대기';
   el('progress').textContent = data.paused ? '소유자가 재개하면 예약 실행에서 실험을 이어갑니다.' : active ? `${active.id}번째 실험 · ${active.status === 'running' ? '결과를 저장하고 있습니다.' : 'GitHub 실행 차례를 기다립니다.'}` : '저장된 작업 상태를 확인했습니다.';
-  el('budget').textContent = `${data.completed_today ?? 0} / ${data.daily_cycle_limit ?? 4}회 완료`;
+  if (data.study?.active) {
+    el('budget-title').textContent = '24시간 한정 연구';
+    el('budget').textContent = `${data.study.completed} / ${data.study.max_cycles}회 완료`;
+    el('budget-help').textContent = `30분 간격 예약 · ${new Date(data.study.ends_at).toLocaleString('ko-KR')}까지 · 오늘 완료 한도 ${data.daily_cycle_limit}회`;
+  } else {
+    el('budget-title').textContent = '오늘 온라인 실험';
+    el('budget').textContent = `${data.completed_today ?? 0} / ${data.daily_cycle_limit ?? 4}회 완료`;
+    el('budget-help').textContent = `${data.study ? '24시간 연구 종료 · ' : ''}기본은 6시간 간격입니다. 하루 집계는 서버 날짜 기준입니다.`;
+  }
   const rows = jobs.map((job) => {
     const row = document.createElement('tr');
     const progress = job.progress || {};
@@ -206,6 +219,23 @@ el('clear').addEventListener('click', () => {
   el('token').value = '';
   el('control-message').textContent = '이 화면에 입력한 인증키를 지웠습니다.';
 });
+
+for (const action of ['study-start', 'study-stop']) {
+  el(action).addEventListener('click', async () => {
+    el('study-start').disabled = el('study-stop').disabled = true;
+    try {
+      await api('/study', action === 'study-start' ? { hours: 24, max_cycles: 48 } : { action: 'stop' });
+      el('control-message').textContent = action === 'study-start'
+        ? '24시간 연구를 시작했습니다. 다음 예약부터 실험하며, 24시간 후 또는 최대 48회 완료 시 기본 예약으로 돌아갑니다.'
+        : '24시간 연구를 종료했습니다. 기본 예약은 유지되며, 진행 중인 실험은 완료될 수 있습니다.';
+      await refresh();
+    } catch (error) {
+      el('control-message').textContent = errorText(error);
+    } finally {
+      el('study-start').disabled = el('study-stop').disabled = false;
+    }
+  });
+}
 
 const exampleLoad = loadExamples();
 try {

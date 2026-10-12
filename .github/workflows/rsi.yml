@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '23 */6 * * *'
+    - cron: '53 * * * *'
+    - cron: '23 1-5,7-11,13-17,19-23 * * *'
 permissions:
   contents: read
 concurrency:
@@ -10,6 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   experiment:
+    if: toJSON(github.event.repository.private) == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -26,7 +29,11 @@ jobs:
         run: |
           test -n "$RSI_URL"
           test -n "$RSI_TOKEN"
+      - name: Check eligible study or baseline schedule
+        id: preflight
+        run: python scripts/schedule.py
       - name: Install bounded CPU runtime
+        if: steps.preflight.outputs.eligible == 'true'
         run: |
           curl --fail --location --retry 2 https://ollama.com/download/ollama-linux-amd64.tar.zst --output /tmp/ollama.tar.zst
           sudo tar --zstd -xf /tmp/ollama.tar.zst -C /usr
@@ -36,8 +43,12 @@ jobs:
             sleep 2
           done
       - name: Obtain selected model
+        if: steps.preflight.outputs.eligible == 'true'
         run: ollama pull qwen3.5:2b-q4_K_M > /tmp/model-pull.log 2>&1
       - name: Run and checkpoint next eligible cycle
+        if: steps.preflight.outputs.eligible == 'true'
+        env:
+          RSI_STUDY_ID: ${{ steps.preflight.outputs.study_id }}
         run: python -m rsi run --cycles 1 --owner github-actions
       - name: Preserve interrupted local evidence
         if: always()
